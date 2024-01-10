@@ -1,3 +1,4 @@
+potpourri3d
 plotly
 dash
 networkx
