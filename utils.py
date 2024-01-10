@@ -1,39 +1,33 @@
-import numpy as np
 import plotly.graph_objects as go
 
 
 def create_mesh(datafile):
-    xs = []
-    ys = []
-    zs = []
-    i_s = []
-    j_s = []
-    k_s = []
+    points = []
+    vertices = []
     with open(datafile, "r") as f:
         # how many points?
         n = int(f.readline())
         for _ in range(n):
-            x, y, z = map(float, f.readline().split())
-            xs.append(x)
-            ys.append(y)
-            zs.append(z)
+            _x, _y, _z = map(float, f.readline().split())
+            points.append((_x, _y, _z))
         # how many triangles?
         n = int(f.readline())
         for _ in range(n):
-            i, j, k = map(int, f.readline().split())
-            i_s.append(i)
-            j_s.append(j)
-            k_s.append(k)
+            _i, _j, _k = map(int, f.readline().split())
+            vertices.append((_i, _j, _k))
+
+    x, y, z = zip(*points)
+    i, j, k = zip(*vertices)
 
     mesh = go.Mesh3d(
-        x=xs,
-        y=ys,
-        z=zs,
+        x=x,
+        y=y,
+        z=z,
         color="lightpink",
         opacity=0.50,
-        i=i_s,
-        j=j_s,
-        k=k_s,
+        i=i,
+        j=j,
+        k=k,
         name="y",
         # for some reason, hoverinfo in dash is buggy without this --v
         hovertemplate="x: %{x}<br>y: %{y}<br>z: %{z}<extra></extra>",
