@@ -1,0 +1,8 @@
+python==3.11.5
+plotly==5.18.0
+jupyter
+dash==2.14.1
+networkx==3.2.1
+potpourri3d==1.0.0
+trimesh==4.0.7
+numpy
