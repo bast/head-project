@@ -1,6 +1,7 @@
 import numpy as np
 import plotly.graph_objects as go
 
+
 def create_mesh(datafile):
     xs = []
     ys = []
@@ -25,17 +26,17 @@ def create_mesh(datafile):
             k_s.append(k)
 
     mesh = go.Mesh3d(
-                x=xs,
-                y=ys,
-                z=zs,
-                color="lightpink",
-                opacity=0.50,
-                i=i_s,
-                j=j_s,
-                k=k_s,
-                name="y",
-                # for some reason, hoverinfo in dash is buggy without this --v
-                hovertemplate='x: %{x}<br>y: %{y}<br>z: %{z}<extra></extra>' 
-            )
-    
+        x=xs,
+        y=ys,
+        z=zs,
+        color="lightpink",
+        opacity=0.50,
+        i=i_s,
+        j=j_s,
+        k=k_s,
+        name="y",
+        # for some reason, hoverinfo in dash is buggy without this --v
+        hovertemplate="x: %{x}<br>y: %{y}<br>z: %{z}<extra></extra>",
+    )
+
     return mesh
