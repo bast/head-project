@@ -7,4 +7,6 @@ if [ ! -f venv.sif ]; then
     singularity pull https://github.com/bast/singularity-venv/releases/download/0.3.0/venv.sif
 fi
 
-./venv.sif jupyter nbconvert --clear-output --inplace dash_app.ipynb
+for notebook in *.ipynb; do
+    ./venv.sif jupyter nbconvert --clear-output --inplace $notebook
+done
