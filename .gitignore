@@ -1,0 +1,5 @@
+data.ply
+__pycache__/
+venv/
+*.sif
+.ipynb_checkpoints/
