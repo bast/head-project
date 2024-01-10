@@ -1,7 +1,10 @@
 plotly
-jupyterlab
 dash
 networkx
 potpourri3d
 trimesh
 numpy
+jupyterlab
+jupyterlab-code-formatter
+black
+isort
