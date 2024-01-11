@@ -1,9 +1,10 @@
 import plotly.graph_objects as go
 
 
-def create_mesh(datafile):
+def read_mesh(datafile):
     points = []
     vertices = []
+
     with open(datafile, "r") as f:
         # how many points?
         n = int(f.readline())
@@ -16,6 +17,10 @@ def create_mesh(datafile):
             _i, _j, _k = map(int, f.readline().split())
             vertices.append((_i, _j, _k))
 
+    return points, vertices
+
+
+def create_mesh(points, vertices):
     x, y, z = zip(*points)
     i, j, k = zip(*vertices)
 
@@ -29,7 +34,7 @@ def create_mesh(datafile):
         j=j,
         k=k,
         name="y",
-        # for some reason, hoverinfo in dash is buggy without this --v
+        # for some reason, hover info in dash is buggy without this
         hovertemplate="x: %{x}<br>y: %{y}<br>z: %{z}<extra></extra>",
     )
 
