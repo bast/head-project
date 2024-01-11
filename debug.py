@@ -1,3 +1,6 @@
+from collections import defaultdict
+
+
 def read_mesh(datafile):
     points = []
     vertices = []
@@ -17,22 +20,18 @@ def read_mesh(datafile):
     return points, vertices
 
 
+def get_stats(vertices):
+    d = defaultdict(int)
+    for i, j, k in vertices:
+        d[tuple(sorted([i, j]))] += 1
+        d[tuple(sorted([j, k]))] += 1
+        d[tuple(sorted([k, i]))] += 1
+
+    stats = defaultdict(int)
+    for v in d.values():
+        stats[v] += 1
+    print(stats)
+
+
 points, vertices = read_mesh("data.txt")
-
-
-def sorted(i, j):
-    return (i, j) if i < j else (j, i)
-
-
-from collections import defaultdict
-
-d = defaultdict(int)
-for i, j, k in vertices:
-    d[sorted(i, j)] += 1
-    d[sorted(j, k)] += 1
-    d[sorted(k, i)] += 1
-
-stats = defaultdict(int)
-for v in d.values():
-    stats[v] += 1
-print(stats)
+get_stats(vertices)
