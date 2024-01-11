@@ -32,4 +32,7 @@ for i, j, k in vertices:
     d[sorted(j, k)] += 1
     d[sorted(k, i)] += 1
 
-print(set(d.values()))
+stats = defaultdict(int)
+for v in d.values():
+    stats[v] += 1
+print(stats)
