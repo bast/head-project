@@ -33,5 +33,36 @@ def get_stats(vertices):
     print(stats)
 
 
+def cycle(i, j, k):
+    return [tuple(sorted([i, j])), tuple(sorted([j, k])), tuple(sorted([k, i]))]
+
+
+def filter_problem_triangles(vertices):
+    d = defaultdict(int)
+    edge_to_triangles = defaultdict(list)
+
+    all_triangles = set()
+    for i, j, k in vertices:
+        ijk = tuple(sorted([i, j, k]))
+        all_triangles.add(ijk)
+        for ij in cycle(i, j, k):
+            d[ij] += 1
+            edge_to_triangles[ij].append(ijk)
+
+    problem_triangles = set()
+    for k, v in d.items():
+        if v > 2:
+            for triangle in edge_to_triangles[k]:
+                problem_triangles.add(triangle)
+
+    # set of triangles that are not problem triangles
+    good_triangles = all_triangles - problem_triangles
+
+    return list(good_triangles)
+
+
 points, vertices = read_mesh("data.txt")
+get_stats(vertices)
+
+vertices = filter_problem_triangles(vertices)
 get_stats(vertices)
