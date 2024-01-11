@@ -32,3 +32,18 @@ vertices = np.array(vertices)
 _solver = pp3d.EdgeFlipGeodesicSolver(points, vertices)
 result = _solver.find_geodesic_path(v_start=14, v_end=22)
 print(result)
+
+
+def sorted(i, j):
+    return (i, j) if i < j else (j, i)
+
+
+from collections import defaultdict
+
+d = defaultdict(int)
+for i, j, k in vertices:
+    d[sorted(i, j)] += 1
+    d[sorted(j, k)] += 1
+    d[sorted(k, i)] += 1
+
+print(set(d.values()))
