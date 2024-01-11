@@ -22,15 +22,20 @@ def read_mesh(datafile):
 
 def get_stats(vertices):
     d = defaultdict(int)
+    indices = set()
     for i, j, k in vertices:
         d[tuple(sorted([i, j]))] += 1
         d[tuple(sorted([j, k]))] += 1
         d[tuple(sorted([k, i]))] += 1
+        indices.add(i)
+        indices.add(j)
+        indices.add(k)
 
     stats = defaultdict(int)
     for v in d.values():
         stats[v] += 1
     print(stats)
+    print(min(indices), max(indices))
 
 
 def cycle(i, j, k):

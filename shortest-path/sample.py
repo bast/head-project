@@ -1,5 +1,6 @@
 import potpourri3d as pp3d
 import numpy as np
+from collections import defaultdict
 
 V, F = pp3d.read_mesh("bunny_small.ply")
 
@@ -26,6 +27,8 @@ for v in F:
     vertices.append((i, j, k))
 
 
+_ = vertices.pop()
+
 points = np.array(points)
 vertices = np.array(vertices)
 
@@ -34,16 +37,16 @@ result = _solver.find_geodesic_path(v_start=14, v_end=22)
 print(result)
 
 
-def sorted(i, j):
-    return (i, j) if i < j else (j, i)
-
-
-from collections import defaultdict
-
 d = defaultdict(int)
+indices = set()
 for i, j, k in vertices:
-    d[sorted(i, j)] += 1
-    d[sorted(j, k)] += 1
-    d[sorted(k, i)] += 1
+    d[tuple(sorted([i, j]))] += 1
+    d[tuple(sorted([j, k]))] += 1
+    d[tuple(sorted([k, i]))] += 1
+    indices.add(i)
+    indices.add(j)
+    indices.add(k)
 
 print(set(d.values()))
+
+print(len(points), min(indices), max(indices))
