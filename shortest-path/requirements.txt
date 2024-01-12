@@ -1,2 +1,0 @@
-potpourri3d
-numpy
