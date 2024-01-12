@@ -1,9 +1,6 @@
 potpourri3d
 plotly
 dash
-networkx
-potpourri3d
-trimesh
 numpy
 jupyterlab
 jupyterlab-code-formatter
