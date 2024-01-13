@@ -166,7 +166,11 @@ def update_graph(
         )
         surface_point_x, surface_point_y, surface_point_z = points[surface_point_index]
 
-        figure["data"] = [e for e in figure["data"] if not "reference" in e["name"]]
+        figure["data"] = [
+            e
+            for e in figure["data"]
+            if not ("reference" in e["name"] or "distance" in e["name"])
+        ]
 
         figure["data"].append(
             go.Scatter3d(
@@ -185,11 +189,11 @@ def update_graph(
                 z=[reference_point_z, surface_point_z],
                 mode="lines",
                 line=dict(
-                    color="blue",
+                    color="gray",
                     width=5,
                     dash="dash",
                 ),
-                name="reference distance",
+                name="line to reference surface point",
             )
         )
         figure["data"].append(
@@ -211,8 +215,8 @@ def update_graph(
         line = draw_path(
             path_pts,
             color="blue",
-            dash="dash",
-            name="shortest path to reference: {:.2f} mm".format(distance),
+            dash=None,
+            name="distance from vertex (Y): {:.2f} mm".format(distance),
         )
         figure["data"].append(line)
 
