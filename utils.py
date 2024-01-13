@@ -32,6 +32,7 @@ def create_line(points):
         line=dict(
             color="blue",
             width=5,
+            dash="dash",
         ),
         name="Extra Lines",
     )
@@ -65,7 +66,7 @@ def filter_vertices(points, vertices):
     indices = {}
     j = 0
     for i, (x, y, z) in enumerate(points):
-        if z > -5.0:
+        if z > -8.4:
             indices[i] = j
             new_points.append((x, y, z))
             j += 1
@@ -116,12 +117,15 @@ def read_ply(file_name):
     return vertices, faces
 
 
-def distance(p1, p2) -> float:
+def distance_squared(p1, p2) -> float:
     dx = p1[0] - p2[0]
     dy = p1[1] - p2[1]
     dz = p1[2] - p2[2]
-    s = dx * dx + dy * dy + dz * dz
-    return s**0.5
+    return dx * dx + dy * dy + dz * dz
+
+
+def distance(p1, p2) -> float:
+    return distance_squared(p1, p2) ** 0.5
 
 
 def path_distance(points) -> float:
@@ -129,3 +133,15 @@ def path_distance(points) -> float:
     for p1, p2 in zip(points[:-1], points[1:]):
         dist += distance(p1, p2)
     return dist
+
+
+def nearest_vertex_noddy(x, y, z, vertices) -> int:
+    p = [x, y, z]
+    min_dist = float("inf")
+    min_j = -1
+    for j, q in enumerate(vertices):
+        d = distance_squared(p, q)
+        if d < min_dist:
+            min_dist = d
+            min_j = j
+    return min_j

@@ -6,6 +6,7 @@ from geodesic import create_solver, find_path
 from head_points import find_reference_points
 from utils import (
     create_line,
+    nearest_vertex_noddy,
     create_mesh,
     filter_vertices,
     path_distance,
@@ -15,7 +16,7 @@ from utils import (
 )
 
 
-def isfloat(x) -> bool:
+def is_float(x) -> bool:
     if x is None:
         return False
     try:
@@ -23,6 +24,12 @@ def isfloat(x) -> bool:
         return True
     except ValueError:
         return False
+
+
+def floats_are_different(a: float, b: float, eps=1e-6) -> bool:
+    if a is None or b is None:
+        return True
+    return abs(a - b) > eps
 
 
 points, vertices = read_mesh("data.txt")
@@ -63,46 +70,141 @@ app = Dash(__name__)
 
 app.layout = html.Div(
     [
-        html.H1(children="Title of Dash App", style={"textAlign": "center"}),
+        html.H1(children="App title", style={"textAlign": "center"}),
         dcc.Graph(id="graph-content", figure=fig),
         html.I("Reference point"),
         html.Br(),
         dcc.Input(
-            id="reference_x",
+            id="reference_point_x",
             type="text",
             placeholder="x",
             style={"marginRight": "10px"},
         ),
         dcc.Input(
-            id="reference_y",
+            id="reference_point_y",
             type="text",
             placeholder="y",
             style={"marginRight": "10px"},
         ),
         dcc.Input(
-            id="reference_z",
+            id="reference_point_z",
             type="text",
             placeholder="z",
             style={"marginRight": "10px"},
         ),
-        dcc.Store(id="mymemory"),
+        dcc.Store(id="state"),
     ]
 )
+
+
+def draw_reference_point(reference_point, state) -> bool:
+    x, y, z = reference_point
+    if not (is_float(x) and is_float(y) and is_float(z)):
+        return False
+
+    x = float(x)
+    y = float(y)
+    z = float(z)
+
+    if state["reference_point"] is None:
+        return True
+
+    x_prev, y_prev, z_prev = tuple(state["reference_point"])
+
+    if (
+        floats_are_different(x, x_prev)
+        or floats_are_different(y, y_prev)
+        or floats_are_different(z, z_prev)
+    ):
+        return True
 
 
 # @callback(Output("graph-content", "figure"), Input("dropdown-selection", "value"))
 @callback(
     Output("graph-content", "figure"),
+    Output("state", "data"),
     Input("graph-content", "clickData"),
-    Input("reference_x", "value"),
-    Input("reference_y", "value"),
-    Input("reference_z", "value"),
+    Input("reference_point_x", "value"),
+    Input("reference_point_y", "value"),
+    Input("reference_point_z", "value"),
     State("graph-content", "figure"),
     State("graph-content", "relayoutData"),  # Capture current view settings
+    State("state", "data"),
 )
 def update_graph(
-    clickData, reference_x, reference_y, reference_z, figure, relayoutData
+    clickData,
+    reference_point_x,
+    reference_point_y,
+    reference_point_z,
+    figure,
+    relayoutData,
+    state,
 ):
+    state = state or {
+        "reference_point": None,
+    }
+    print("state", state)
+
+    if draw_reference_point(
+        (reference_point_x, reference_point_y, reference_point_z), state
+    ):
+        reference_point_x = float(reference_point_x)
+        reference_point_y = float(reference_point_y)
+        reference_point_z = float(reference_point_z)
+
+        state["reference_point"] = (
+            reference_point_x,
+            reference_point_y,
+            reference_point_z,
+        )
+
+        i = nearest_vertex_noddy(
+            reference_point_x,
+            reference_point_y,
+            reference_point_z,
+            points,
+        )
+        surface_point_x, surface_point_y, surface_point_z = points[i]
+
+        figure["data"] = [e for e in figure["data"] if not "reference" in e["name"]]
+
+        figure["data"].append(
+            go.Scatter3d(
+                x=[reference_point_x],
+                y=[reference_point_y],
+                z=[reference_point_z],
+                mode="markers",
+                marker=dict(size=5, color="gray"),
+                name="reference point",
+            )
+        )
+        figure["data"].append(
+            go.Scatter3d(
+                x=[reference_point_x, surface_point_x],
+                y=[reference_point_y, surface_point_y],
+                z=[reference_point_z, surface_point_z],
+                mode="lines",
+                line=dict(
+                    color="blue",
+                    width=5,
+                    dash="dash",
+                ),
+                name="reference distance",
+            )
+        )
+        figure["data"].append(
+            go.Scatter3d(
+                x=[surface_point_x],
+                y=[surface_point_y],
+                z=[surface_point_z],
+                mode="markers",
+                marker=dict(size=5, color="green"),
+                name="reference surface point",
+            )
+        )
+
+        return figure, state
+
     if clickData is not None:
         clicked_point = clickData["points"][0]
         coords = (clicked_point["x"], clicked_point["y"], clicked_point["z"])
@@ -138,17 +240,6 @@ def update_graph(
             name="Clicked Point",
         )
 
-        if isfloat(reference_x) and isfloat(reference_y) and isfloat(reference_z):
-            refernce_point = go.Scatter3d(
-                x=[reference_x],
-                y=[reference_y],
-                z=[reference_z],
-                mode="markers",
-                marker=dict(size=5, color="gray"),
-                name="reference point",
-            )
-            figure["data"].append(refernce_point)
-
         # Remove the last clicked point and edges
         figure["data"] = [
             trace
@@ -164,8 +255,8 @@ def update_graph(
         if relayoutData and "scene.camera" in relayoutData:
             figure["layout"]["scene"]["camera"] = relayoutData["scene.camera"]
 
-        return figure
-    return figure
+        return figure, state
+    return figure, state
 
 
 if __name__ == "__main__":
