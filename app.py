@@ -67,7 +67,7 @@ app.layout = html.Div(
     State("graph-content", "figure"),
     State("graph-content", "relayoutData"),  # Capture current view settings
 )
-def update_graph(clickData, existing_figure, relayoutData):
+def update_graph(clickData, figure, relayoutData):
     if clickData is not None:
         clicked_point = clickData["points"][0]
         coords = (clicked_point["x"], clicked_point["y"], clicked_point["z"])
@@ -92,7 +92,7 @@ def update_graph(clickData, existing_figure, relayoutData):
             "bordercolor": "black",
             "borderwidth": 1,
         }
-        existing_figure["layout"]["annotations"] = [annotation]
+        figure["layout"]["annotations"] = [annotation]
 
         clicked_point_trace = go.Scatter3d(
             x=[coords[0]],
@@ -104,21 +104,21 @@ def update_graph(clickData, existing_figure, relayoutData):
         )
 
         # Remove the last clicked point and edges
-        existing_figure["data"] = [
+        figure["data"] = [
             trace
-            for trace in existing_figure["data"]
+            for trace in figure["data"]
             if trace["name"] not in ["Clicked Point", "edge"]
         ]
-        existing_figure["data"].append(clicked_point_trace)
+        figure["data"].append(clicked_point_trace)
 
-        existing_figure["data"].append(line)
+        figure["data"].append(line)
 
         # Apply the captured view settings to maintain orientation
         if relayoutData and "scene.camera" in relayoutData:
-            existing_figure["layout"]["scene"]["camera"] = relayoutData["scene.camera"]
+            figure["layout"]["scene"]["camera"] = relayoutData["scene.camera"]
 
-        return existing_figure
-    return existing_figure
+        return figure
+    return figure
 
 
 if __name__ == "__main__":
