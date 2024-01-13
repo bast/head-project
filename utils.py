@@ -21,7 +21,7 @@ def read_mesh(datafile):
     return points, vertices
 
 
-def create_line(points):
+def draw_path(points, color, dash, name):
     x, y, z = zip(*points)
 
     line = go.Scatter3d(
@@ -30,11 +30,11 @@ def create_line(points):
         z=z,
         mode="lines",
         line=dict(
-            color="blue",
+            color=color,
             width=5,
-            dash="dash",
+            dash=dash,
         ),
-        name="Extra Lines",
+        name=name,
     )
 
     return line

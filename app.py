@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 from geodesic import create_solver, find_path
 from head_points import find_reference_points
 from utils import (
-    create_line,
+    draw_path,
     nearest_vertex_noddy,
     create_mesh,
     filter_vertices,
@@ -158,13 +158,13 @@ def update_graph(
             reference_point_z,
         )
 
-        i = nearest_vertex_noddy(
+        surface_point_index = nearest_vertex_noddy(
             reference_point_x,
             reference_point_y,
             reference_point_z,
             points,
         )
-        surface_point_x, surface_point_y, surface_point_z = points[i]
+        surface_point_x, surface_point_y, surface_point_z = points[surface_point_index]
 
         figure["data"] = [e for e in figure["data"] if not "reference" in e["name"]]
 
@@ -203,6 +203,19 @@ def update_graph(
             )
         )
 
+        path_pts = find_path(
+            solver, v_start=all_ref_points[0], v_end=surface_point_index
+        )
+        distance = path_distance(path_pts)
+
+        line = draw_path(
+            path_pts,
+            color="blue",
+            dash="dash",
+            name="shortest path to reference: {:.2f} mm".format(distance),
+        )
+        figure["data"].append(line)
+
         return figure, state
 
     if clickData is not None:
@@ -211,11 +224,7 @@ def update_graph(
 
         clicked_index = clicked_point["pointNumber"]
 
-        path_pts = find_path(solver, v_start=all_ref_points[0], v_end=clicked_index)
-        line = create_line(path_pts)
-
-        distance = path_distance(path_pts)
-
+        distance = 0.0
         # Add the distance as an annotation near the last clicked point
         annotation = {
             "text": f"Distance: {distance:.2f}",
@@ -248,8 +257,6 @@ def update_graph(
         ]
 
         figure["data"].append(clicked_point_trace)
-
-        figure["data"].append(line)
 
         # Apply the captured view settings to maintain orientation
         if relayoutData and "scene.camera" in relayoutData:
