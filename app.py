@@ -92,6 +92,11 @@ app.layout = html.Div(
             placeholder="z",
             style={"marginRight": "10px"},
         ),
+        dcc.RadioItems(
+            id="location",
+            options=["Vertex", "Nasion", "Inion", "Left tragus", "Right tragus"],
+            value="Vertex",
+        ),
         dcc.Store(id="state"),
     ]
 )
@@ -119,7 +124,6 @@ def draw_reference_point(reference_point, state) -> bool:
         return True
 
 
-# @callback(Output("graph-content", "figure"), Input("dropdown-selection", "value"))
 @callback(
     Output("graph-content", "figure"),
     Output("state", "data"),
@@ -127,6 +131,7 @@ def draw_reference_point(reference_point, state) -> bool:
     Input("reference_point_x", "value"),
     Input("reference_point_y", "value"),
     Input("reference_point_z", "value"),
+    Input("location", "value"),
     State("graph-content", "figure"),
     State("graph-content", "relayoutData"),  # Capture current view settings
     State("state", "data"),
@@ -136,6 +141,7 @@ def update_graph(
     reference_point_x,
     reference_point_y,
     reference_point_z,
+    location,
     figure,
     relayoutData,
     state,
@@ -144,6 +150,7 @@ def update_graph(
         "reference_point": None,
     }
     print("state", state)
+    print("location", location)
 
     if draw_reference_point(
         (reference_point_x, reference_point_y, reference_point_z), state
