@@ -15,6 +15,16 @@ from utils import (
 )
 
 
+def isfloat(x) -> bool:
+    if x is None:
+        return False
+    try:
+        float(x)
+        return True
+    except ValueError:
+        return False
+
+
 points, vertices = read_mesh("data.txt")
 
 
@@ -54,8 +64,28 @@ app = Dash(__name__)
 app.layout = html.Div(
     [
         html.H1(children="Title of Dash App", style={"textAlign": "center"}),
-        #     dcc.Dropdown(df.country.unique(), "Canada", id="dropdown-selection"),
         dcc.Graph(id="graph-content", figure=fig),
+        html.I("Reference point"),
+        html.Br(),
+        dcc.Input(
+            id="reference_x",
+            type="text",
+            placeholder="x",
+            style={"marginRight": "10px"},
+        ),
+        dcc.Input(
+            id="reference_y",
+            type="text",
+            placeholder="y",
+            style={"marginRight": "10px"},
+        ),
+        dcc.Input(
+            id="reference_z",
+            type="text",
+            placeholder="z",
+            style={"marginRight": "10px"},
+        ),
+        dcc.Store(id="mymemory"),
     ]
 )
 
@@ -64,10 +94,15 @@ app.layout = html.Div(
 @callback(
     Output("graph-content", "figure"),
     Input("graph-content", "clickData"),
+    Input("reference_x", "value"),
+    Input("reference_y", "value"),
+    Input("reference_z", "value"),
     State("graph-content", "figure"),
     State("graph-content", "relayoutData"),  # Capture current view settings
 )
-def update_graph(clickData, figure, relayoutData):
+def update_graph(
+    clickData, reference_x, reference_y, reference_z, figure, relayoutData
+):
     if clickData is not None:
         clicked_point = clickData["points"][0]
         coords = (clicked_point["x"], clicked_point["y"], clicked_point["z"])
@@ -103,12 +138,24 @@ def update_graph(clickData, figure, relayoutData):
             name="Clicked Point",
         )
 
+        if isfloat(reference_x) and isfloat(reference_y) and isfloat(reference_z):
+            refernce_point = go.Scatter3d(
+                x=[reference_x],
+                y=[reference_y],
+                z=[reference_z],
+                mode="markers",
+                marker=dict(size=5, color="gray"),
+                name="reference point",
+            )
+            figure["data"].append(refernce_point)
+
         # Remove the last clicked point and edges
         figure["data"] = [
             trace
             for trace in figure["data"]
             if trace["name"] not in ["Clicked Point", "edge"]
         ]
+
         figure["data"].append(clicked_point_trace)
 
         figure["data"].append(line)
