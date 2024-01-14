@@ -1,4 +1,3 @@
-import plotly.graph_objects as go
 import potpourri3d as pp3d
 
 
@@ -19,46 +18,6 @@ def read_mesh(datafile):
             vertices.append((_i, _j, _k))
 
     return points, vertices
-
-
-def draw_path(points, color, dash, name):
-    x, y, z = zip(*points)
-
-    line = go.Scatter3d(
-        x=x,
-        y=y,
-        z=z,
-        mode="lines",
-        line=dict(
-            color=color,
-            width=5,
-            dash=dash,
-        ),
-        name=name,
-    )
-
-    return line
-
-
-def create_mesh(points, vertices):
-    x, y, z = zip(*points)
-    i, j, k = zip(*vertices)
-
-    mesh = go.Mesh3d(
-        x=x,
-        y=y,
-        z=z,
-        color="lightpink",
-        opacity=0.50,
-        i=i,
-        j=j,
-        k=k,
-        name="y",
-        # for some reason, hover info in dash is buggy without this
-        hovertemplate="x: %{x}<br>y: %{y}<br>z: %{z}<extra></extra>",
-    )
-
-    return mesh
 
 
 def filter_vertices(points, vertices):
@@ -124,23 +83,11 @@ def distance_squared(p1, p2) -> float:
     return dx * dx + dy * dy + dz * dz
 
 
-def distance(p1, p2) -> float:
-    return distance_squared(p1, p2) ** 0.5
-
-
-def path_distance(points) -> float:
-    dist = 0.0
-    for p1, p2 in zip(points[:-1], points[1:]):
-        dist += distance(p1, p2)
-    return dist
-
-
-def nearest_vertex_noddy(x, y, z, vertices) -> int:
-    p = [x, y, z]
+def nearest_vertex_noddy(point, vertices) -> int:
     min_dist = float("inf")
     min_j = -1
     for j, q in enumerate(vertices):
-        d = distance_squared(p, q)
+        d = distance_squared(point, q)
         if d < min_dist:
             min_dist = d
             min_j = j

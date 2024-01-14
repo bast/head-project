@@ -1,17 +1,14 @@
 from dash import Dash, html, dcc, callback, Output, Input, State
-import plotly.graph_objects as go
+
+from figure_elements import create_mesh_figure, draw_point, draw_line
 
 
 from geodesic import create_solver, find_path
 from head_points import find_reference_points
 from utils import (
-    draw_path,
     nearest_vertex_noddy,
-    create_mesh,
     filter_vertices,
-    path_distance,
     read_mesh,
-    read_ply,
     remove_unreferenced_indices,
 )
 
@@ -39,29 +36,20 @@ points, vertices = filter_vertices(points, vertices)
 points, vertices = remove_unreferenced_indices(points, vertices)
 
 
-mesh = create_mesh(points, vertices)
 solver = create_solver(points, vertices)
 
 
-fig = go.Figure(data=[mesh])
-fig.update_layout(
-    autosize=False,
-    width=1000,
-    height=1000,
-)
+fig = create_mesh_figure(points, vertices)
 
 
-all_ref_points = find_reference_points(mesh)
+all_ref_points = find_reference_points(points, vertices)
 
 for i in all_ref_points:
     fig.add_trace(
-        go.Scatter3d(
-            x=[mesh.x[i]],
-            y=[mesh.y[i]],
-            z=[mesh.z[i]],
-            mode="markers",
+        draw_point(
+            points[i],
+            color="red",
             name=f"ref point {i}",
-            marker=dict(size=3, color="red", opacity=0.8),
         )
     )
 
@@ -94,7 +82,17 @@ app.layout = html.Div(
         ),
         dcc.RadioItems(
             id="location",
-            options=["Vertex", "Nasion", "Inion", "Left tragus", "Right tragus"],
+            options=[
+                "Vertex",
+                "Nasion",
+                "Inion",
+                "Left tragus",
+                "Right tragus",
+                "Circumference front",
+                "Circumference back",
+                "Circumference left",
+                "Circumference right",
+            ],
             value="Vertex",
         ),
         dcc.Store(id="state"),
@@ -102,7 +100,7 @@ app.layout = html.Div(
 )
 
 
-def draw_reference_point(reference_point, state) -> bool:
+def reference_point_moved(reference_point, state) -> bool:
     x, y, z = reference_point
     if not (is_float(x) and is_float(y) and is_float(z)):
         return False
@@ -152,80 +150,64 @@ def update_graph(
     print("state", state)
     print("location", location)
 
-    if draw_reference_point(
+    if reference_point_moved(
         (reference_point_x, reference_point_y, reference_point_z), state
     ):
-        reference_point_x = float(reference_point_x)
-        reference_point_y = float(reference_point_y)
-        reference_point_z = float(reference_point_z)
-
-        state["reference_point"] = (
-            reference_point_x,
-            reference_point_y,
-            reference_point_z,
+        reference_point = (
+            float(reference_point_x),
+            float(reference_point_y),
+            float(reference_point_z),
         )
+
+        state["reference_point"] = reference_point
 
         surface_point_index = nearest_vertex_noddy(
-            reference_point_x,
-            reference_point_y,
-            reference_point_z,
+            reference_point,
             points,
         )
-        surface_point_x, surface_point_y, surface_point_z = points[surface_point_index]
+        surface_point = points[surface_point_index]
 
         figure["data"] = [
-            e
-            for e in figure["data"]
-            if not ("reference" in e["name"] or "distance" in e["name"])
+            trace
+            for trace in figure["data"]
+            if not ("reference" in trace["name"] or "distance" in trace["name"])
         ]
 
         figure["data"].append(
-            go.Scatter3d(
-                x=[reference_point_x],
-                y=[reference_point_y],
-                z=[reference_point_z],
-                mode="markers",
-                marker=dict(size=5, color="gray"),
+            draw_point(
+                reference_point,
+                color="gray",
                 name="reference point",
             )
         )
         figure["data"].append(
-            go.Scatter3d(
-                x=[reference_point_x, surface_point_x],
-                y=[reference_point_y, surface_point_y],
-                z=[reference_point_z, surface_point_z],
-                mode="lines",
-                line=dict(
-                    color="gray",
-                    width=5,
-                    dash="dash",
-                ),
+            draw_line(
+                [reference_point, surface_point],
+                color="gray",
+                dash="dash",
                 name="line to reference surface point",
             )
         )
         figure["data"].append(
-            go.Scatter3d(
-                x=[surface_point_x],
-                y=[surface_point_y],
-                z=[surface_point_z],
-                mode="markers",
-                marker=dict(size=5, color="green"),
+            draw_point(
+                surface_point,
+                color="green",
                 name="reference surface point",
             )
         )
 
-        path_pts = find_path(
+        distance, path = find_path(
             solver, v_start=all_ref_points[0], v_end=surface_point_index
         )
-        distance = path_distance(path_pts)
 
-        line = draw_path(
-            path_pts,
-            color="blue",
-            dash=None,
-            name="distance from vertex (Y): {:.2f} mm".format(distance),
+        figure["data"].append(
+            draw_line(
+                path,
+                color="blue",
+                dash=None,
+                name="distance from vertex (Y): {:.2f} mm".format(distance),
+            )
         )
-        figure["data"].append(line)
 
         return figure, state
 
@@ -235,41 +217,22 @@ def update_graph(
 
         clicked_index = clicked_point["pointNumber"]
 
-        distance = 0.0
-        # Add the distance as an annotation near the last clicked point
-        annotation = {
-            "text": f"Distance: {distance:.2f}",
-            "xref": "paper",  # Use 'paper' for positioning relative to the entire plot
-            "yref": "paper",
-            "x": 0.05,  # X position in paper coordinates (0 is left, 1 is right)
-            "y": 0.95,  # Y position in paper coordinates (0 is bottom, 1 is top)
-            "showarrow": False,  # No arrow needed
-            "font": {"size": 12},
-            "bgcolor": "white",  # Background color for better visibility
-            "bordercolor": "black",
-            "borderwidth": 1,
-        }
-        figure["layout"]["annotations"] = [annotation]
-
-        clicked_point_trace = go.Scatter3d(
-            x=[coords[0]],
-            y=[coords[1]],
-            z=[coords[2]],
-            mode="markers",
-            marker=dict(size=5, color="blue"),
-            name="Clicked Point",
-        )
-
-        # Remove the last clicked point and edges
+        # remove the last clicked point and edges
         figure["data"] = [
             trace
             for trace in figure["data"]
             if trace["name"] not in ["Clicked Point", "edge"]
         ]
 
-        figure["data"].append(clicked_point_trace)
+        figure["data"].append(
+            draw_point(
+                coords,
+                color="blue",
+                name="Clicked Point",
+            )
+        )
 
-        # Apply the captured view settings to maintain orientation
+        # apply the captured view settings to maintain orientation
         if relayoutData and "scene.camera" in relayoutData:
             figure["layout"]["scene"]["camera"] = relayoutData["scene.camera"]
 

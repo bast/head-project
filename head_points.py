@@ -1,4 +1,5 @@
 import numpy as np
+import plotly.graph_objects as go
 
 
 def find_closest_vertex(axis1, axis2):
@@ -51,9 +52,32 @@ def find_closest_vertex_conditional(mesh, condition):
     return idx
 
 
-def find_reference_points(mesh):
+def find_reference_points(points, vertices):
+    mesh = create_mesh(points, vertices)
+
     points = []
     for condition in range(5):
         points.append(find_closest_vertex_conditional(mesh, condition))
 
     return points
+
+
+def create_mesh(points, vertices):
+    x, y, z = zip(*points)
+    i, j, k = zip(*vertices)
+
+    mesh = go.Mesh3d(
+        x=x,
+        y=y,
+        z=z,
+        color="lightpink",
+        opacity=0.50,
+        i=i,
+        j=j,
+        k=k,
+        name="y",
+        # for some reason, hover info in dash is buggy without this
+        hovertemplate="x: %{x}<br>y: %{y}<br>z: %{z}<extra></extra>",
+    )
+
+    return mesh
