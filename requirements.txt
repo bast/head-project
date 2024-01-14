@@ -2,7 +2,3 @@ potpourri3d
 plotly
 dash
 numpy
-jupyterlab
-jupyterlab-code-formatter
-black
-isort
