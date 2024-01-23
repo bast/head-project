@@ -25,7 +25,7 @@ def filter_vertices(points, vertices):
     indices = {}
     j = 0
     for i, (x, y, z) in enumerate(points):
-        if z > -8.4:
+        if z > -7.5:
             indices[i] = j
             new_points.append((x, y, z))
             j += 1
