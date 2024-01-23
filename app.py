@@ -29,7 +29,7 @@ def floats_are_different(a: float, b: float, eps=1e-6) -> bool:
     return abs(a - b) > eps
 
 
-points, vertices = read_mesh("data.txt")
+points, vertices = read_mesh("generate-data/smaller-data.txt")
 
 
 points, vertices = filter_vertices(points, vertices)
