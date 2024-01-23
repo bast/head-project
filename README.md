@@ -1,6 +1,7 @@
 ## Notes
 
 - Dash can serve on http://127.0.0.1:8050/
+- `wget https://github.com/simnibs/example-dataset/releases/latest/download/simnibs4_examples.zip`
 
 
 ## Resources
