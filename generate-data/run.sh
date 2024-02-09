@@ -11,7 +11,7 @@ time ./simnibs.sif charm --forcerun --forceqform test T1_somedata.nii.gz
 # user	192m18.608s
 # sys	49m12.418s
 
-time ./simnibs.sif simnibs_python read.py > data.txt
-# real	0m11.877s
-# user	0m11.117s
-# sys	0m2.455s
+time ./simnibs.sif simnibs_python read.py --input-mesh="m2m_test/test.msh" --output-path="data"
+# real 0m11.969s
+# user 0m11.120s
+# sys  0m2.611s
