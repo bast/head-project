@@ -45,10 +45,12 @@ def main(input_mesh, output_path):
     os.makedirs(output_path, exist_ok=True)
 
     faces = defaultdict(list)
+    faces["all"] = []
     for e, (i, j, k, l) in enumerate(mesh.elm.node_number_list):
         if l == -1:
-            tag = mesh.elm.tag1[e]
+            tag = str(mesh.elm.tag1[e])
             faces[tag].append((i - 1, j - 1, k - 1))
+            faces["all"].append((i - 1, j - 1, k - 1))
 
     for tag in faces:
         output_file = os.path.join(output_path, f"{tag}.txt")
