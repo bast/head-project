@@ -2,10 +2,12 @@
 
 set -euf -o pipefail
 
-wget https://github.com/bast/ray/archive/main.zip
+ray_version="0998e93117accf5740c43af06fa194712dd6199f"
 
-unzip main.zip
+wget https://github.com/bast/ray/archive/${ray_version}.zip
 
-cd ray-main
+unzip ${ray_version}.zip
+
+cd ray-${ray_version}
 
 cargo build --release
