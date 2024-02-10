@@ -2,4 +2,4 @@
 
 set -euf -o pipefail
 
-ray-main/target/release/ray
+ray/target/release/ray --input-file data/all.txt --output-file data/outside-only.txt
