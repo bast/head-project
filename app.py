@@ -7,9 +7,7 @@ from geodesic import create_solver, find_path
 from head_points import find_reference_points
 from utils import (
     nearest_vertex_noddy,
-    filter_vertices,
     read_mesh,
-    remove_unreferenced_indices,
 )
 
 
@@ -29,11 +27,7 @@ def floats_are_different(a: float, b: float, eps=1e-6) -> bool:
     return abs(a - b) > eps
 
 
-points, vertices = read_mesh("generate-data/smaller-data.txt")
-
-
-points, vertices = filter_vertices(points, vertices)
-points, vertices = remove_unreferenced_indices(points, vertices)
+points, vertices = read_mesh("outside-only.txt")
 
 
 solver = create_solver(points, vertices)
@@ -52,6 +46,18 @@ for i in all_ref_points:
             name=f"ref point {i}",
         )
     )
+
+# debugging
+# bad_indices = [1472, 22914]
+# for index in bad_indices:
+#     dot = points[index]
+#     fig.add_trace(
+#         draw_point(
+#             dot,
+#             color="purple",
+#             name="Bad",
+#         )
+#     )
 
 
 app = Dash(__name__)
