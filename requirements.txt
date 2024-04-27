@@ -2,3 +2,5 @@ potpourri3d
 plotly
 dash
 numpy
+vulture
+black
