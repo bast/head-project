@@ -221,7 +221,7 @@ def update_graph(
         clicked_point = clickData["points"][0]
         coords = (clicked_point["x"], clicked_point["y"], clicked_point["z"])
 
-        clicked_index = clicked_point["pointNumber"]
+        # clicked_index = clicked_point["pointNumber"]
 
         # remove the last clicked point and edges
         figure["data"] = [
