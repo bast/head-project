@@ -48,6 +48,4 @@ def create_mesh(points, vertices, name, color, opacity):
         j=j,
         k=k,
         name=name,
-        # for some reason, hover info in dash is buggy without this
-        hovertemplate="x: %{x}<br>y: %{y}<br>z: %{z}<extra></extra>",
     )
