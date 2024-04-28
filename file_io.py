@@ -1,6 +1,3 @@
-import potpourri3d as pp3d
-
-
 def read_mesh(datafile):
     points = []
     vertices = []
@@ -18,21 +15,3 @@ def read_mesh(datafile):
             vertices.append((_i, _j, _k))
 
     return points, vertices
-
-
-def distance_squared(p1, p2) -> float:
-    dx = p1[0] - p2[0]
-    dy = p1[1] - p2[1]
-    dz = p1[2] - p2[2]
-    return dx * dx + dy * dy + dz * dz
-
-
-def nearest_vertex_noddy(point, vertices) -> int:
-    min_dist = float("inf")
-    min_j = -1
-    for j, q in enumerate(vertices):
-        d = distance_squared(point, q)
-        if d < min_dist:
-            min_dist = d
-            min_j = j
-    return min_j

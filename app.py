@@ -1,14 +1,11 @@
 from dash import Dash, html, dcc, callback, Output, Input, State
 
+
 from figure_elements import create_mesh_figure, draw_point, draw_line
-
-
 from geodesic import create_solver, find_path
 from head_points import find_reference_points
-from utils import (
-    nearest_vertex_noddy,
-    read_mesh,
-)
+from distance import nearest_vertex_noddy
+from file_io import read_mesh
 
 
 def is_float(x) -> bool:
@@ -220,8 +217,6 @@ def update_graph(
     if clickData is not None:
         clicked_point = clickData["points"][0]
         coords = (clicked_point["x"], clicked_point["y"], clicked_point["z"])
-
-        # clicked_index = clicked_point["pointNumber"]
 
         # remove the last clicked point and edges
         figure["data"] = [
