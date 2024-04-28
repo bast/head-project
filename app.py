@@ -112,6 +112,7 @@ app.layout = html.Div(
                     ],
                     style={"padding": 10, "background-color": "gray"},
                 ),
+                html.Div(html.H3(id="my-output")),
                 html.Div(
                     children=[
                         html.H3("(re)locate point"),
@@ -151,7 +152,7 @@ app.layout = html.Div(
                     style={"padding": 10, "background-color": "lightgreen"},
                 ),
             ],
-            style={"display": "flex"},
+            style={"display": "flex", "flexDirection": "column"},
         ),
         dcc.Store(id="state"),
     ]
@@ -198,6 +199,7 @@ def add_path_to_figure(figure, path, locations, solver):
 @callback(
     Output("graph-content", "figure"),
     Output("state", "data"),
+    Output("my-output", "children"),
     Input("graph-content", "clickData"),
     Input("reference_point_x", "value"),
     Input("reference_point_y", "value"),
@@ -288,7 +290,7 @@ def update_graph(
             )
         )
 
-        return figure, state
+        return figure, state, "some output"
 
     # update surfaces
     surfaces_to_remove, surfaces_to_add = detect_changes_in_list(
@@ -340,7 +342,7 @@ def update_graph(
     if relayoutData and "scene.camera" in relayoutData:
         figure["layout"]["scene"]["camera"] = relayoutData["scene.camera"]
 
-    return figure, state
+    return figure, state, "some output"
 
 
 if __name__ == "__main__":
