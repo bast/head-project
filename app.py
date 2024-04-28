@@ -117,11 +117,15 @@ app.layout = html.Div(
                             children=[
                                 dbc.Label("result"),
                                 dbc.Alert(
-                                    "placeholder", color="primary", id="my-output"
+                                    "placeholder",
+                                    color="primary",
+                                    id="computed-x-coordinate",
                                 ),
-                                # dbc.Alert(
-                                #     "placeholder", color="primary", id="my-output"
-                                # ),
+                                dbc.Alert(
+                                    "placeholder",
+                                    color="primary",
+                                    id="computed-y-coordinate",
+                                ),
                             ],
                         ),
                         html.Br(),
@@ -196,24 +200,28 @@ def remove_from_figure(figure, to_remove):
         ]
 
 
-def add_path_to_figure(figure, path, locations, solver):
+def add_path_to_figure(
+    figure, path, locations, distances, solver, color="black", dash="dash"
+):
     a, b = path.split(" - ")
     v_start, v_end = locations[a], locations[b]
-    _distance, shortest_path = find_path(solver, v_start, v_end)
+    distance, shortest_path = find_path(solver, v_start, v_end)
     figure["data"].append(
         draw_line(
             shortest_path,
-            color="black",
-            dash="dash",
+            color=color,
+            dash=dash,
             name=path,
         )
     )
+    distances[path] = distance
 
 
 @callback(
     Output("graph-content", "figure"),
     Output("state", "data"),
-    Output("my-output", "children"),
+    Output("computed-x-coordinate", "children"),
+    Output("computed-y-coordinate", "children"),
     Input("graph-content", "clickData"),
     Input("reference_point_x", "value"),
     Input("reference_point_y", "value"),
@@ -243,6 +251,7 @@ def update_graph(
         "selected_paths": None,
         "clicked_index": None,
         "locations": locations,
+        "distances": {},
     }
 
     if reference_point_moved(
@@ -265,7 +274,7 @@ def update_graph(
         figure["data"] = [
             trace
             for trace in figure["data"]
-            if not ("reference" in trace["name"] or "distance" in trace["name"])
+            if not ("reference" in trace["name"] or "surface" in trace["name"])
         ]
 
         figure["data"].append(
@@ -291,20 +300,16 @@ def update_graph(
             )
         )
 
-        v_start = locations["vertex"]
-        v_end = surface_point_index
-        distance, path = find_path(solver, v_start, v_end)
-
-        figure["data"].append(
-            draw_line(
-                path,
-                color="blue",
-                dash=None,
-                name="distance from vertex (Y): {:.2f} mm".format(distance),
-            )
+        state["locations"]["surface point"] = surface_point_index
+        add_path_to_figure(
+            figure,
+            "vertex - surface point",
+            state["locations"],
+            state["distances"],
+            solver,
+            color="blue",
+            dash="solid",
         )
-
-        return figure, state, "some output"
 
     # update surfaces
     surfaces_to_remove, surfaces_to_add = detect_changes_in_list(
@@ -321,7 +326,7 @@ def update_graph(
     )
     remove_from_figure(figure, paths_to_remove)
     for path in paths_to_add:
-        add_path_to_figure(figure, path, state["locations"], solver)
+        add_path_to_figure(figure, path, state["locations"], state["distances"], solver)
     state["selected_paths"] = selected_paths
 
     # update points
@@ -348,7 +353,24 @@ def update_graph(
                     a, b = path.split(" - ")
                     if a == location or b == location:
                         remove_from_figure(figure, [path])
-                        add_path_to_figure(figure, path, state["locations"], solver)
+                        add_path_to_figure(
+                            figure, path, state["locations"], state["distances"], solver
+                        )
+
+            # if surface point is defined and vertex moved, recalculate path vertex - surface point
+            if "surface point" in state["locations"]:
+                if location == "vertex":
+                    path = "vertex - surface point"
+                    remove_from_figure(figure, [path])
+                    add_path_to_figure(
+                        figure,
+                        path,
+                        state["locations"],
+                        state["distances"],
+                        solver,
+                        color="blue",
+                        dash="solid",
+                    )
 
         state["clicked_index"] = clicked_index
 
@@ -356,7 +378,7 @@ def update_graph(
     if relayoutData and "scene.camera" in relayoutData:
         figure["layout"]["scene"]["camera"] = relayoutData["scene.camera"]
 
-    return figure, state, "some output"
+    return figure, state, "X=?", "y=?"
 
 
 if __name__ == "__main__":
