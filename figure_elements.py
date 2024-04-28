@@ -14,6 +14,7 @@ def draw_point(point, color, name):
             size=4,
         ),
         name=name,
+        showlegend=False,
     )
 
 
@@ -31,6 +32,7 @@ def draw_line(points, color, dash, name):
             dash=dash,
         ),
         name=name,
+        showlegend=False,
     )
 
 
