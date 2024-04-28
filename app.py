@@ -1,4 +1,5 @@
 from dash import Dash, html, dcc, callback, Output, Input, State
+import dash_bootstrap_components as dbc
 import argparse
 import os
 import plotly.graph_objects as go
@@ -78,7 +79,7 @@ for location, index in locations.items():
     )
 
 
-app = Dash(__name__)
+app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 app.layout = html.Div(
     [
@@ -87,48 +88,58 @@ app.layout = html.Div(
                 dcc.Graph(id="graph-content", figure=fig),
                 html.Div(
                     children=[
+                        html.Br(),
                         html.Div(
                             children=[
-                                html.H3("reference point"),
-                                dcc.Input(
+                                dbc.Label("reference point"),
+                                dbc.Input(
                                     id="reference_point_x",
                                     type="text",
                                     placeholder="x",
                                     style={"marginRight": "10px"},
                                 ),
-                                html.Br(),
-                                dcc.Input(
+                                dbc.Input(
                                     id="reference_point_y",
                                     type="text",
                                     placeholder="y",
                                     style={"marginRight": "10px"},
                                 ),
-                                html.Br(),
-                                dcc.Input(
+                                dbc.Input(
                                     id="reference_point_z",
                                     type="text",
                                     placeholder="z",
                                     style={"marginRight": "10px"},
                                 ),
                             ],
-                            style={"padding": 10, "background-color": "gray"},
                         ),
-                        html.Div(html.H3(id="my-output")),
+                        html.Br(),
                         html.Div(
                             children=[
-                                html.H3("(re)locate point"),
-                                dcc.RadioItems(
+                                dbc.Label("result"),
+                                dbc.Alert(
+                                    "placeholder", color="primary", id="my-output"
+                                ),
+                                # dbc.Alert(
+                                #     "placeholder", color="primary", id="my-output"
+                                # ),
+                            ],
+                        ),
+                        html.Br(),
+                        html.Div(
+                            children=[
+                                dbc.Label("(re)locate point"),
+                                dbc.RadioItems(
                                     id="location",
                                     options=["aim point"] + list(locations.keys()),
                                     value="aim point",
                                 ),
                             ],
-                            style={"padding": 10, "background-color": "lightblue"},
                         ),
+                        html.Br(),
                         html.Div(
                             children=[
-                                html.H3("show path"),
-                                dcc.Checklist(
+                                dbc.Label("show path"),
+                                dbc.Checklist(
                                     id="selected_paths",
                                     options=[
                                         "left tragus - vertex",
@@ -140,17 +151,16 @@ app.layout = html.Div(
                                     ],
                                 ),
                             ],
-                            style={"padding": 10, "background-color": "lightcoral"},
                         ),
+                        html.Br(),
                         html.Div(
                             children=[
-                                html.H3("show surface"),
-                                dcc.Checklist(
+                                dbc.Label("show surface"),
+                                dbc.Checklist(
                                     id="selected_surfaces",
                                     options=surface_files,
                                 ),
                             ],
-                            style={"padding": 10, "background-color": "lightgreen"},
                         ),
                     ],
                     style={"display": "flex", "flexDirection": "column"},
@@ -212,7 +222,7 @@ def add_path_to_figure(figure, path, locations, solver):
     Input("selected_paths", "value"),
     Input("selected_surfaces", "value"),
     State("graph-content", "figure"),
-    State("graph-content", "relayoutData"),  # Capture current view settings
+    State("graph-content", "relayoutData"),  # capture current view settings
     State("state", "data"),
 )
 def update_graph(

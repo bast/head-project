@@ -1,6 +1,7 @@
 potpourri3d
 plotly
 dash
+dash-bootstrap-components
 numpy
 vulture
 black
