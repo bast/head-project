@@ -376,7 +376,9 @@ def update_graph(
     if relayoutData and "scene.camera" in relayoutData:
         figure["layout"]["scene"]["camera"] = relayoutData["scene.camera"]
 
-    return figure, state, "X=?", "y=?"
+    X = f"X = {state['distances'].get('vertex - surface point', 0):.1f} mm"
+    Y = f"X = {state['distances'].get('cf front - aim point', 0):.1f} mm"
+    return figure, state, X, Y
 
 
 if __name__ == "__main__":
