@@ -36,12 +36,12 @@ fig, mesh = create_mesh_figure(points, vertices)
 all_ref_points = find_reference_points(mesh)
 print(all_ref_points)
 
-for position, index in all_ref_points.items():
+for location, index in all_ref_points.items():
     fig.add_trace(
         draw_point(
             points[index],
             color="red",
-            name=f"{position}: {index}",
+            name=location,
         )
     )
 
@@ -75,17 +75,18 @@ app.layout = html.Div(
         dcc.RadioItems(
             id="location",
             options=[
-                "Vertex",
-                "Nasion",
-                "Inion",
-                "Left tragus",
-                "Right tragus",
+                "some point",
+                "vertex",
+                "nasion",
+                "inion",
+                "left tragus",
+                "right tragus",
                 "Circumference front",
                 "Circumference back",
                 "Circumference left",
                 "Circumference right",
             ],
-            value="Vertex",
+            value="some point",
         ),
         dcc.Store(id="state"),
     ]
@@ -138,9 +139,9 @@ def update_graph(
 ):
     state = state or {
         "reference_point": None,
+        "selected_location": "some point",
     }
     print("state", state)
-    print("location", location)
 
     if reference_point_moved(
         (reference_point_x, reference_point_y, reference_point_z), state
@@ -188,7 +189,7 @@ def update_graph(
             )
         )
 
-        _position, index = all_ref_points["vertex"]
+        index = all_ref_points["vertex"]
         distance, path = find_path(solver, v_start=index, v_end=surface_point_index)
 
         figure["data"].append(
@@ -203,22 +204,27 @@ def update_graph(
         return figure, state
 
     if clickData is not None:
-        # remove the last clicked point and edges
-        figure["data"] = [
-            trace
-            for trace in figure["data"]
-            if trace["name"] not in ["Clicked Point", "edge"]
-        ]
-
-        # draw new clicked point
         clicked_point = clickData["points"][0]
-        figure["data"].append(
-            draw_point(
-                (clicked_point["x"], clicked_point["y"], clicked_point["z"]),
-                color="blue",
-                name="Clicked Point",
+
+        if location == state["selected_location"]:
+            # remove the old point
+            figure["data"] = [
+                trace
+                for trace in figure["data"]
+                if trace["name"] not in [location, "edge"]
+            ]
+
+            # draw new clicked point
+            figure["data"].append(
+                draw_point(
+                    (clicked_point["x"], clicked_point["y"], clicked_point["z"]),
+                    color="blue",
+                    name=location,
+                )
             )
-        )
+
+        else:
+            state["selected_location"] = location
 
         # apply the captured view settings to maintain orientation
         if relayoutData and "scene.camera" in relayoutData:

@@ -11,24 +11,24 @@ def _find_closest_vertex(axis1, axis2):
     return closest_vertex_index
 
 
-def find_closest_vertex(mesh, position):
-    if position == "vertex":
+def find_closest_vertex(mesh, location):
+    if location == "vertex":
         temp_array = np.where(np.array(mesh.z) > 0)[0]
         axis1 = mesh.x
         axis2 = mesh.y
-    elif position == "nasion":
+    elif location == "right tragus":
         temp_array = np.where(np.array(mesh.x) > 0)[0]
         axis1 = mesh.z
         axis2 = mesh.y
-    elif position == "inion":
+    elif location == "left tragus":
         temp_array = np.where(np.array(mesh.x) < 0)[0]
         axis1 = mesh.z
         axis2 = mesh.y
-    elif position == "left tragus":
+    elif location == "nasion":
         temp_array = np.where(np.array(mesh.y) > 0)[0]
         axis1 = mesh.z
         axis2 = mesh.x
-    elif position == "right tragus":
+    elif location == "inion":
         temp_array = np.where(np.array(mesh.y) < 0)[0]
         axis1 = mesh.z
         axis2 = mesh.x
@@ -45,6 +45,6 @@ def find_closest_vertex(mesh, position):
 
 def find_reference_points(mesh):
     points = {}
-    for position in ["vertex", "nasion", "inion", "left tragus", "right tragus"]:
-        points[position] = find_closest_vertex(mesh, position)
+    for location in ["vertex", "nasion", "inion", "left tragus", "right tragus"]:
+        points[location] = find_closest_vertex(mesh, location)
     return points
