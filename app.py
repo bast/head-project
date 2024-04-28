@@ -1,4 +1,6 @@
 from dash import Dash, html, dcc, callback, Output, Input, State
+import argparse
+import os
 
 
 from figure_elements import create_mesh_figure, draw_point, draw_line
@@ -6,6 +8,20 @@ from geodesic import create_solver, find_path
 from head_points import find_reference_points
 from distance import nearest_vertex_noddy
 from file_io import read_mesh
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Run the TMS location app.")
+    parser.add_argument(
+        "--input-directory",
+        type=str,
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+    )
+
+    return parser.parse_args()
 
 
 def is_float(x) -> bool:
@@ -24,7 +40,20 @@ def floats_are_different(a: float, b: float, eps=1e-6) -> bool:
     return abs(a - b) > eps
 
 
-points, vertices = read_mesh("ernie_data/outside-only.txt")
+def get_list_of_files(directory: str) -> list:
+    surface_files = [f for f in os.listdir(directory) if f.endswith(".txt")]
+    surface_files.remove("outside-only.txt")
+    return sorted(surface_files)
+
+
+args = parse_args()
+
+
+input_file = os.path.join(args.input_directory, "outside-only.txt")
+points, vertices = read_mesh(input_file)
+
+
+surface_files = get_list_of_files(args.input_directory)
 
 
 solver = create_solver(points, vertices)
@@ -116,6 +145,16 @@ app.layout = html.Div(
                     ],
                     style={"padding": 10, "background-color": "lightcoral"},
                 ),
+                html.Div(
+                    children=[
+                        html.H3("show surface"),
+                        dcc.Checklist(
+                            id="show_surface",
+                            options=surface_files,
+                        ),
+                    ],
+                    style={"padding": 10, "background-color": "lightgreen"},
+                ),
             ],
             style={"display": "flex"},
         ),
@@ -155,6 +194,7 @@ def reference_point_moved(reference_point, state) -> bool:
     Input("reference_point_z", "value"),
     Input("location", "value"),
     Input("show_path", "value"),
+    Input("show_surface", "value"),
     State("graph-content", "figure"),
     State("graph-content", "relayoutData"),  # Capture current view settings
     State("state", "data"),
@@ -166,6 +206,7 @@ def update_graph(
     reference_point_z,
     location,
     show_path,
+    show_surface,
     figure,
     relayoutData,
     state,
@@ -269,5 +310,4 @@ def update_graph(
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
-#   app.run()
+    app.run(debug=args.debug)

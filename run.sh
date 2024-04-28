@@ -7,4 +7,4 @@ if [ ! -f venv.sif ]; then
     singularity pull https://github.com/bast/apptainer-venv/releases/download/0.4.0/venv.sif
 fi
 
-./venv.sif python app.py
+./venv.sif python app.py --input-directory=ernie_data --debug
