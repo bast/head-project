@@ -16,15 +16,15 @@ def find_closest_vertex(mesh, location):
         temp_array = np.where(np.array(mesh.z) > 0)[0]
         axis1 = mesh.x
         axis2 = mesh.y
-    elif location == "right tragus":
+    elif location == "right tragus" or location == "cf right":
         temp_array = np.where(np.array(mesh.x) > 0)[0]
         axis1 = mesh.z
         axis2 = mesh.y
-    elif location == "left tragus":
+    elif location == "left tragus" or location == "cf left":
         temp_array = np.where(np.array(mesh.x) < 0)[0]
         axis1 = mesh.z
         axis2 = mesh.y
-    elif location == "nasion":
+    elif location == "nasion" or location == "cf front":
         temp_array = np.where(np.array(mesh.y) > 0)[0]
         axis1 = mesh.z
         axis2 = mesh.x
@@ -45,6 +45,15 @@ def find_closest_vertex(mesh, location):
 
 def approximate_locations(mesh):
     points = {}
-    for location in ["vertex", "nasion", "inion", "left tragus", "right tragus"]:
+    for location in [
+        "vertex",
+        "nasion",
+        "inion",
+        "left tragus",
+        "right tragus",
+        "cf left",
+        "cf right",
+        "cf front",
+    ]:
         points[location] = find_closest_vertex(mesh, location)
     return points

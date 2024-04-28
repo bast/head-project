@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 
 from figure_elements import create_mesh, draw_point, draw_line
 from geodesic import create_solver, find_path
-from head_points import approximate_locations
+from guess_locations import approximate_locations
 from distance import nearest_vertex_noddy
 from file_io import read_mesh
 from reference_point import reference_point_moved
@@ -29,6 +29,7 @@ def parse_args():
 def get_list_of_files(directory: str) -> list:
     surface_files = [f for f in os.listdir(directory) if f.endswith(".txt")]
     surface_files.remove("outside-only.txt")
+    surface_files = ["1010.txt"]  # for testing
     return sorted(surface_files)
 
 
@@ -65,9 +66,9 @@ fig.update_layout(
 )
 
 
-important_locations = approximate_locations(mesh["outside-only"])
+locations = approximate_locations(mesh["outside-only"])
 
-for location, index in important_locations.items():
+for location, index in locations.items():
     fig.add_trace(
         draw_point(
             points[index],
@@ -116,16 +117,8 @@ app.layout = html.Div(
                         html.H3("(re)locate point"),
                         dcc.RadioItems(
                             id="location",
-                            options=[
-                                "some point",
-                                "vertex",
-                                "nasion",
-                                "inion",
-                                "left tragus",
-                                "right tragus",
-                                "circumference front",
-                            ],
-                            value="some point",
+                            options=["aim point"] + list(locations.keys()),
+                            value="aim point",
                         ),
                     ],
                     style={"padding": 10, "background-color": "lightblue"},
@@ -134,14 +127,14 @@ app.layout = html.Div(
                     children=[
                         html.H3("show path"),
                         dcc.Checklist(
-                            id="show_path",
+                            id="selected_paths",
                             options=[
-                                "foo",
-                                "bar1",
-                                "bar2",
-                                "bar3",
-                                "bar4",
-                                "bar5",
+                                "left tragus - vertex",
+                                "right tragus - vertex",
+                                "nasion - vertex",
+                                "inion - vertex",
+                                "cf left - cf front",
+                                "cf right - cf front",
                             ],
                         ),
                     ],
@@ -151,7 +144,7 @@ app.layout = html.Div(
                     children=[
                         html.H3("show surface"),
                         dcc.Checklist(
-                            id="show_surface",
+                            id="selected_surfaces",
                             options=surface_files,
                         ),
                     ],
@@ -165,6 +158,43 @@ app.layout = html.Div(
 )
 
 
+def detect_changes_in_list(list_selected, list_state):
+    to_remove = []
+    to_add = []
+
+    if list_selected != list_state:
+        if list_state:
+            previous_set = set(list_state)
+        else:
+            previous_set = set()
+
+        to_remove = previous_set - set(list_selected)
+        to_add = set(list_selected) - previous_set
+
+    return to_remove, to_add
+
+
+def remove_from_figure(figure, to_remove):
+    if to_remove:
+        figure["data"] = [
+            trace for trace in figure["data"] if trace["name"] not in to_remove
+        ]
+
+
+def add_path_to_figure(figure, path, locations, solver):
+    a, b = path.split(" - ")
+    v_start, v_end = locations[a], locations[b]
+    _distance, shortest_path = find_path(solver, v_start, v_end)
+    figure["data"].append(
+        draw_line(
+            shortest_path,
+            color="black",
+            dash="dash",
+            name=path,
+        )
+    )
+
+
 @callback(
     Output("graph-content", "figure"),
     Output("state", "data"),
@@ -173,8 +203,8 @@ app.layout = html.Div(
     Input("reference_point_y", "value"),
     Input("reference_point_z", "value"),
     Input("location", "value"),
-    Input("show_path", "value"),
-    Input("show_surface", "value"),
+    Input("selected_paths", "value"),
+    Input("selected_surfaces", "value"),
     State("graph-content", "figure"),
     State("graph-content", "relayoutData"),  # Capture current view settings
     State("state", "data"),
@@ -185,16 +215,18 @@ def update_graph(
     reference_point_y,
     reference_point_z,
     location,
-    show_path,
-    show_surface,
+    selected_paths,
+    selected_surfaces,
     figure,
     relayoutData,
     state,
 ):
     state = state or {
         "reference_point": None,
-        "selected_location": "some point",
         "selected_surfaces": None,
+        "selected_paths": None,
+        "clicked_index": None,
+        "locations": locations,
     }
 
     if reference_point_moved(
@@ -243,8 +275,9 @@ def update_graph(
             )
         )
 
-        index = important_locations["vertex"]
-        distance, path = find_path(solver, v_start=index, v_end=surface_point_index)
+        v_start = locations["vertex"]
+        v_end = surface_point_index
+        distance, path = find_path(solver, v_start, v_end)
 
         figure["data"].append(
             draw_line(
@@ -257,17 +290,32 @@ def update_graph(
 
         return figure, state
 
+    # we clicked on the graph or on a radio button or checkbox
     if clickData is not None:
 
-        clicked_point = clickData["points"][0]
+        # update surfaces
+        surfaces_to_remove, surfaces_to_add = detect_changes_in_list(
+            selected_surfaces, state["selected_surfaces"]
+        )
+        remove_from_figure(figure, surfaces_to_remove)
+        for surface in surfaces_to_add:
+            figure["data"].append(mesh[surface])
+        state["selected_surfaces"] = selected_surfaces
 
-        if location == state["selected_location"]:
-            # remove the old point
-            figure["data"] = [
-                trace
-                for trace in figure["data"]
-                if trace["name"] not in [location, "edge"]
-            ]
+        # update paths
+        paths_to_remove, paths_to_add = detect_changes_in_list(
+            selected_paths, state["selected_paths"]
+        )
+        remove_from_figure(figure, paths_to_remove)
+        for path in paths_to_add:
+            add_path_to_figure(figure, path, state["locations"], solver)
+        state["selected_paths"] = selected_paths
+
+        # update points
+        clicked_point = clickData["points"][0]
+        clicked_index = clicked_point["pointNumber"]
+        if clicked_index != state["clicked_index"]:
+            remove_from_figure(figure, [location])
 
             # draw new clicked point
             figure["data"].append(
@@ -278,25 +326,17 @@ def update_graph(
                 )
             )
 
-        if show_surface != state["selected_surfaces"]:
-            if state["selected_surfaces"]:
-                previous_set = set(state["selected_surfaces"])
-            else:
-                previous_set = set()
+            state["locations"][location] = clicked_index
 
-            surfaces_to_remove = previous_set - set(show_surface)
-            figure["data"] = [
-                trace
-                for trace in figure["data"]
-                if trace["name"] not in surfaces_to_remove
-            ]
+            # was the clicked point part of a selected path?
+            if state["selected_paths"]:
+                for path in state["selected_paths"]:
+                    a, b = path.split(" - ")
+                    if a == location or b == location:
+                        remove_from_figure(figure, [path])
+                        add_path_to_figure(figure, path, state["locations"], solver)
 
-            surfaces_to_add = set(show_surface) - previous_set
-            for surface in surfaces_to_add:
-                figure["data"].append(mesh[surface])
-
-        state["selected_location"] = location
-        state["selected_surfaces"] = show_surface
+        state["clicked_index"] = clicked_index
 
         # apply the captured view settings to maintain orientation
         if relayoutData and "scene.camera" in relayoutData:
