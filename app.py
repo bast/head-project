@@ -30,17 +30,18 @@ points, vertices = read_mesh("ernie_data/outside-only.txt")
 solver = create_solver(points, vertices)
 
 
-fig = create_mesh_figure(points, vertices)
+fig, mesh = create_mesh_figure(points, vertices)
 
 
-all_ref_points = find_reference_points(points, vertices)
+all_ref_points = find_reference_points(mesh)
+print(all_ref_points)
 
-for i in all_ref_points:
+for position, index in all_ref_points.items():
     fig.add_trace(
         draw_point(
-            points[i],
+            points[index],
             color="red",
-            name=f"ref point {i}",
+            name=f"{position}: {index}",
         )
     )
 
@@ -187,9 +188,8 @@ def update_graph(
             )
         )
 
-        distance, path = find_path(
-            solver, v_start=all_ref_points[0], v_end=surface_point_index
-        )
+        _position, index = all_ref_points["vertex"]
+        distance, path = find_path(solver, v_start=index, v_end=surface_point_index)
 
         figure["data"].append(
             draw_line(

@@ -60,4 +60,4 @@ def create_mesh_figure(points, vertices):
         height=1000,
     )
 
-    return fig
+    return fig, mesh
