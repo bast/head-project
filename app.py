@@ -6,9 +6,10 @@ import plotly.graph_objects as go
 
 from figure_elements import create_mesh, draw_point, draw_line
 from geodesic import create_solver, find_path
-from head_points import find_reference_points
+from head_points import approximate_locations
 from distance import nearest_vertex_noddy
 from file_io import read_mesh
+from reference_point import reference_point_moved
 
 
 def parse_args():
@@ -23,22 +24,6 @@ def parse_args():
     )
 
     return parser.parse_args()
-
-
-def is_float(x) -> bool:
-    if x is None:
-        return False
-    try:
-        float(x)
-        return True
-    except ValueError:
-        return False
-
-
-def floats_are_different(a: float, b: float, eps=1e-6) -> bool:
-    if a is None or b is None:
-        return True
-    return abs(a - b) > eps
 
 
 def get_list_of_files(directory: str) -> list:
@@ -80,9 +65,9 @@ fig.update_layout(
 )
 
 
-all_ref_points = find_reference_points(mesh["outside-only"])
+important_locations = approximate_locations(mesh["outside-only"])
 
-for location, index in all_ref_points.items():
+for location, index in important_locations.items():
     fig.add_trace(
         draw_point(
             points[index],
@@ -180,28 +165,6 @@ app.layout = html.Div(
 )
 
 
-def reference_point_moved(reference_point, state) -> bool:
-    x, y, z = reference_point
-    if not (is_float(x) and is_float(y) and is_float(z)):
-        return False
-
-    x = float(x)
-    y = float(y)
-    z = float(z)
-
-    if state["reference_point"] is None:
-        return True
-
-    x_prev, y_prev, z_prev = tuple(state["reference_point"])
-
-    if (
-        floats_are_different(x, x_prev)
-        or floats_are_different(y, y_prev)
-        or floats_are_different(z, z_prev)
-    ):
-        return True
-
-
 @callback(
     Output("graph-content", "figure"),
     Output("state", "data"),
@@ -280,7 +243,7 @@ def update_graph(
             )
         )
 
-        index = all_ref_points["vertex"]
+        index = important_locations["vertex"]
         distance, path = find_path(solver, v_start=index, v_end=surface_point_index)
 
         figure["data"].append(

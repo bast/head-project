@@ -43,7 +43,7 @@ def find_closest_vertex(mesh, location):
     return idx
 
 
-def find_reference_points(mesh):
+def approximate_locations(mesh):
     points = {}
     for location in ["vertex", "nasion", "inion", "left tragus", "right tragus"]:
         points[location] = find_closest_vertex(mesh, location)
