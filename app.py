@@ -61,8 +61,8 @@ fig = go.Figure(data=[mesh["outside-only"]])
 
 fig.update_layout(
     autosize=False,
-    width=900,
-    height=900,
+    width=1200,
+    height=1200,
 )
 
 
@@ -82,77 +82,81 @@ app = Dash(__name__)
 
 app.layout = html.Div(
     [
-        html.H1(children="TMS location", style={"textAlign": "center"}),
-        dcc.Graph(id="graph-content", figure=fig),
         html.Div(
             children=[
+                dcc.Graph(id="graph-content", figure=fig),
                 html.Div(
                     children=[
-                        html.H3("reference point"),
-                        dcc.Input(
-                            id="reference_point_x",
-                            type="text",
-                            placeholder="x",
-                            style={"marginRight": "10px"},
-                        ),
-                        html.Br(),
-                        dcc.Input(
-                            id="reference_point_y",
-                            type="text",
-                            placeholder="y",
-                            style={"marginRight": "10px"},
-                        ),
-                        html.Br(),
-                        dcc.Input(
-                            id="reference_point_z",
-                            type="text",
-                            placeholder="z",
-                            style={"marginRight": "10px"},
-                        ),
-                    ],
-                    style={"padding": 10, "background-color": "gray"},
-                ),
-                html.Div(html.H3(id="my-output")),
-                html.Div(
-                    children=[
-                        html.H3("(re)locate point"),
-                        dcc.RadioItems(
-                            id="location",
-                            options=["aim point"] + list(locations.keys()),
-                            value="aim point",
-                        ),
-                    ],
-                    style={"padding": 10, "background-color": "lightblue"},
-                ),
-                html.Div(
-                    children=[
-                        html.H3("show path"),
-                        dcc.Checklist(
-                            id="selected_paths",
-                            options=[
-                                "left tragus - vertex",
-                                "right tragus - vertex",
-                                "nasion - vertex",
-                                "inion - vertex",
-                                "cf left - cf front",
-                                "cf right - cf front",
+                        html.Div(
+                            children=[
+                                html.H3("reference point"),
+                                dcc.Input(
+                                    id="reference_point_x",
+                                    type="text",
+                                    placeholder="x",
+                                    style={"marginRight": "10px"},
+                                ),
+                                html.Br(),
+                                dcc.Input(
+                                    id="reference_point_y",
+                                    type="text",
+                                    placeholder="y",
+                                    style={"marginRight": "10px"},
+                                ),
+                                html.Br(),
+                                dcc.Input(
+                                    id="reference_point_z",
+                                    type="text",
+                                    placeholder="z",
+                                    style={"marginRight": "10px"},
+                                ),
                             ],
+                            style={"padding": 10, "background-color": "gray"},
+                        ),
+                        html.Div(html.H3(id="my-output")),
+                        html.Div(
+                            children=[
+                                html.H3("(re)locate point"),
+                                dcc.RadioItems(
+                                    id="location",
+                                    options=["aim point"] + list(locations.keys()),
+                                    value="aim point",
+                                ),
+                            ],
+                            style={"padding": 10, "background-color": "lightblue"},
+                        ),
+                        html.Div(
+                            children=[
+                                html.H3("show path"),
+                                dcc.Checklist(
+                                    id="selected_paths",
+                                    options=[
+                                        "left tragus - vertex",
+                                        "right tragus - vertex",
+                                        "nasion - vertex",
+                                        "inion - vertex",
+                                        "cf left - cf front",
+                                        "cf right - cf front",
+                                    ],
+                                ),
+                            ],
+                            style={"padding": 10, "background-color": "lightcoral"},
+                        ),
+                        html.Div(
+                            children=[
+                                html.H3("show surface"),
+                                dcc.Checklist(
+                                    id="selected_surfaces",
+                                    options=surface_files,
+                                ),
+                            ],
+                            style={"padding": 10, "background-color": "lightgreen"},
                         ),
                     ],
-                    style={"padding": 10, "background-color": "lightcoral"},
-                ),
-                html.Div(
-                    children=[
-                        html.H3("show surface"),
-                        dcc.Checklist(
-                            id="selected_surfaces",
-                            options=surface_files,
-                        ),
-                    ],
-                    style={"padding": 10, "background-color": "lightgreen"},
+                    style={"display": "flex", "flexDirection": "column"},
                 ),
             ],
-            style={"display": "flex", "flexDirection": "column"},
+            style={"display": "flex", "flexDirection": "row"},
         ),
         dcc.Store(id="state"),
     ]
