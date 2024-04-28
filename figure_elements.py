@@ -34,30 +34,20 @@ def draw_line(points, color, dash, name):
     )
 
 
-def create_mesh_figure(points, vertices):
+def create_mesh(points, vertices, name, color, opacity):
     x, y, z = zip(*points)
     i, j, k = zip(*vertices)
 
-    mesh = go.Mesh3d(
+    return go.Mesh3d(
         x=x,
         y=y,
         z=z,
-        color="lightpink",
-        opacity=0.50,
+        color=color,
+        opacity=opacity,
         i=i,
         j=j,
         k=k,
-        name="y",
+        name=name,
         # for some reason, hover info in dash is buggy without this
         hovertemplate="x: %{x}<br>y: %{y}<br>z: %{z}<extra></extra>",
     )
-
-    fig = go.Figure(data=[mesh])
-
-    fig.update_layout(
-        autosize=False,
-        width=1000,
-        height=1000,
-    )
-
-    return fig, mesh

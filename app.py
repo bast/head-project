@@ -1,9 +1,10 @@
 from dash import Dash, html, dcc, callback, Output, Input, State
 import argparse
 import os
+import plotly.graph_objects as go
 
 
-from figure_elements import create_mesh_figure, draw_point, draw_line
+from figure_elements import create_mesh, draw_point, draw_line
 from geodesic import create_solver, find_path
 from head_points import find_reference_points
 from distance import nearest_vertex_noddy
@@ -48,22 +49,38 @@ def get_list_of_files(directory: str) -> list:
 
 args = parse_args()
 
-
-input_file = os.path.join(args.input_directory, "outside-only.txt")
-points, vertices = read_mesh(input_file)
-
-
 surface_files = get_list_of_files(args.input_directory)
 
 
+mesh = {}
+
+for surface in surface_files:
+    points, vertices = read_mesh(os.path.join(args.input_directory, surface))
+    mesh[surface] = create_mesh(
+        points=points, vertices=vertices, name=surface, color="lightblue", opacity=0.2
+    )
+
+points, vertices = read_mesh(os.path.join(args.input_directory, "outside-only.txt"))
+mesh["outside-only"] = create_mesh(
+    points=points,
+    vertices=vertices,
+    name="outside-only",
+    color="lightpink",
+    opacity=0.5,
+)
 solver = create_solver(points, vertices)
 
 
-fig, mesh = create_mesh_figure(points, vertices)
+fig = go.Figure(data=[mesh["outside-only"]])
+
+fig.update_layout(
+    autosize=False,
+    width=900,
+    height=900,
+)
 
 
-all_ref_points = find_reference_points(mesh)
-print(all_ref_points)
+all_ref_points = find_reference_points(mesh["outside-only"])
 
 for location, index in all_ref_points.items():
     fig.add_trace(
@@ -214,8 +231,8 @@ def update_graph(
     state = state or {
         "reference_point": None,
         "selected_location": "some point",
+        "selected_surfaces": None,
     }
-    print("state", state)
 
     if reference_point_moved(
         (reference_point_x, reference_point_y, reference_point_z), state
@@ -278,6 +295,7 @@ def update_graph(
         return figure, state
 
     if clickData is not None:
+
         clicked_point = clickData["points"][0]
 
         if location == state["selected_location"]:
@@ -297,8 +315,25 @@ def update_graph(
                 )
             )
 
-        else:
-            state["selected_location"] = location
+        if show_surface != state["selected_surfaces"]:
+            if state["selected_surfaces"]:
+                previous_set = set(state["selected_surfaces"])
+            else:
+                previous_set = set()
+
+            surfaces_to_remove = previous_set - set(show_surface)
+            figure["data"] = [
+                trace
+                for trace in figure["data"]
+                if trace["name"] not in surfaces_to_remove
+            ]
+
+            surfaces_to_add = set(show_surface) - previous_set
+            for surface in surfaces_to_add:
+                figure["data"].append(mesh[surface])
+
+        state["selected_location"] = location
+        state["selected_surfaces"] = show_surface
 
         # apply the captured view settings to maintain orientation
         if relayoutData and "scene.camera" in relayoutData:
