@@ -27,7 +27,7 @@ def floats_are_different(a: float, b: float, eps=1e-6) -> bool:
     return abs(a - b) > eps
 
 
-points, vertices = read_mesh("outside-only.txt")
+points, vertices = read_mesh("ernie_data/outside-only.txt")
 
 
 solver = create_solver(points, vertices)
