@@ -290,31 +290,31 @@ def update_graph(
 
         return figure, state
 
-    # we clicked on the graph or on a radio button or checkbox
+    # update surfaces
+    surfaces_to_remove, surfaces_to_add = detect_changes_in_list(
+        selected_surfaces, state["selected_surfaces"]
+    )
+    remove_from_figure(figure, surfaces_to_remove)
+    for surface in surfaces_to_add:
+        figure["data"].append(mesh[surface])
+    state["selected_surfaces"] = selected_surfaces
+
+    # update paths
+    paths_to_remove, paths_to_add = detect_changes_in_list(
+        selected_paths, state["selected_paths"]
+    )
+    remove_from_figure(figure, paths_to_remove)
+    for path in paths_to_add:
+        add_path_to_figure(figure, path, state["locations"], solver)
+    state["selected_paths"] = selected_paths
+
+    # update points
     if clickData is not None:
-
-        # update surfaces
-        surfaces_to_remove, surfaces_to_add = detect_changes_in_list(
-            selected_surfaces, state["selected_surfaces"]
-        )
-        remove_from_figure(figure, surfaces_to_remove)
-        for surface in surfaces_to_add:
-            figure["data"].append(mesh[surface])
-        state["selected_surfaces"] = selected_surfaces
-
-        # update paths
-        paths_to_remove, paths_to_add = detect_changes_in_list(
-            selected_paths, state["selected_paths"]
-        )
-        remove_from_figure(figure, paths_to_remove)
-        for path in paths_to_add:
-            add_path_to_figure(figure, path, state["locations"], solver)
-        state["selected_paths"] = selected_paths
-
-        # update points
         clicked_point = clickData["points"][0]
         clicked_index = clicked_point["pointNumber"]
         if clicked_index != state["clicked_index"]:
+            state["locations"][location] = clicked_index
+
             remove_from_figure(figure, [location])
 
             # draw new clicked point
@@ -326,8 +326,6 @@ def update_graph(
                 )
             )
 
-            state["locations"][location] = clicked_index
-
             # was the clicked point part of a selected path?
             if state["selected_paths"]:
                 for path in state["selected_paths"]:
@@ -338,11 +336,9 @@ def update_graph(
 
         state["clicked_index"] = clicked_index
 
-        # apply the captured view settings to maintain orientation
-        if relayoutData and "scene.camera" in relayoutData:
-            figure["layout"]["scene"]["camera"] = relayoutData["scene.camera"]
-
-        return figure, state
+    # apply the captured view settings to maintain orientation
+    if relayoutData and "scene.camera" in relayoutData:
+        figure["layout"]["scene"]["camera"] = relayoutData["scene.camera"]
 
     return figure, state
 
