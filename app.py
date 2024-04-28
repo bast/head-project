@@ -34,6 +34,50 @@ def get_list_of_files(directory: str) -> list:
     return sorted(surface_files)
 
 
+def detect_changes_in_list(list_selected, list_state):
+    to_remove = []
+    to_add = []
+
+    if list_selected != list_state:
+        if list_state:
+            previous_set = set(list_state)
+        else:
+            previous_set = set()
+
+        to_remove = previous_set - set(list_selected)
+        to_add = set(list_selected) - previous_set
+
+    return to_remove, to_add
+
+
+def remove_from_figure(figure, to_remove):
+    if to_remove:
+        figure["data"] = [
+            trace for trace in figure["data"] if trace["name"] not in to_remove
+        ]
+
+
+def add_path_to_figure(figure, path, locations, distances, solver):
+    color = "black"
+    dash = "dash"
+    if path in ["cf front - aim point", "vertex - surface point"]:
+        color = "blue"
+        dash = "solid"
+
+    a, b = path.split(" - ")
+    v_start, v_end = locations[a], locations[b]
+    distance, shortest_path = find_path(solver, v_start, v_end)
+    figure["data"].append(
+        draw_line(
+            shortest_path,
+            color=color,
+            dash=dash,
+            name=path,
+        )
+    )
+    distances[path] = distance
+
+
 args = parse_args()
 
 surface_files = get_list_of_files(args.input_directory)
@@ -152,6 +196,8 @@ app.layout = html.Div(
                                         "inion - vertex",
                                         "cf left - cf front",
                                         "cf right - cf front",
+                                        "cf front - aim point",
+                                        "vertex - aim point",
                                     ],
                                 ),
                             ],
@@ -175,46 +221,6 @@ app.layout = html.Div(
         dcc.Store(id="state"),
     ]
 )
-
-
-def detect_changes_in_list(list_selected, list_state):
-    to_remove = []
-    to_add = []
-
-    if list_selected != list_state:
-        if list_state:
-            previous_set = set(list_state)
-        else:
-            previous_set = set()
-
-        to_remove = previous_set - set(list_selected)
-        to_add = set(list_selected) - previous_set
-
-    return to_remove, to_add
-
-
-def remove_from_figure(figure, to_remove):
-    if to_remove:
-        figure["data"] = [
-            trace for trace in figure["data"] if trace["name"] not in to_remove
-        ]
-
-
-def add_path_to_figure(
-    figure, path, locations, distances, solver, color="black", dash="dash"
-):
-    a, b = path.split(" - ")
-    v_start, v_end = locations[a], locations[b]
-    distance, shortest_path = find_path(solver, v_start, v_end)
-    figure["data"].append(
-        draw_line(
-            shortest_path,
-            color=color,
-            dash=dash,
-            name=path,
-        )
-    )
-    distances[path] = distance
 
 
 @callback(
@@ -307,8 +313,6 @@ def update_graph(
             state["locations"],
             state["distances"],
             solver,
-            color="blue",
-            dash="solid",
         )
 
     # update surfaces
@@ -363,13 +367,7 @@ def update_graph(
                     path = "vertex - surface point"
                     remove_from_figure(figure, [path])
                     add_path_to_figure(
-                        figure,
-                        path,
-                        state["locations"],
-                        state["distances"],
-                        solver,
-                        color="blue",
-                        dash="solid",
+                        figure, path, state["locations"], state["distances"], solver
                     )
 
         state["clicked_index"] = clicked_index
