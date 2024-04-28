@@ -44,18 +44,6 @@ for i in all_ref_points:
         )
     )
 
-# debugging
-# bad_indices = [1472, 22914]
-# for index in bad_indices:
-#     dot = points[index]
-#     fig.add_trace(
-#         draw_point(
-#             dot,
-#             color="purple",
-#             name="Bad",
-#         )
-#     )
-
 
 app = Dash(__name__)
 
@@ -215,9 +203,6 @@ def update_graph(
         return figure, state
 
     if clickData is not None:
-        clicked_point = clickData["points"][0]
-        coords = (clicked_point["x"], clicked_point["y"], clicked_point["z"])
-
         # remove the last clicked point and edges
         figure["data"] = [
             trace
@@ -225,9 +210,11 @@ def update_graph(
             if trace["name"] not in ["Clicked Point", "edge"]
         ]
 
+        # draw new clicked point
+        clicked_point = clickData["points"][0]
         figure["data"].append(
             draw_point(
-                coords,
+                (clicked_point["x"], clicked_point["y"], clicked_point["z"]),
                 color="blue",
                 name="Clicked Point",
             )
@@ -238,6 +225,7 @@ def update_graph(
             figure["layout"]["scene"]["camera"] = relayoutData["scene.camera"]
 
         return figure, state
+
     return figure, state
 
 
