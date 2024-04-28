@@ -50,43 +50,74 @@ app = Dash(__name__)
 
 app.layout = html.Div(
     [
-        html.H1(children="App title", style={"textAlign": "center"}),
+        html.H1(children="TMS location", style={"textAlign": "center"}),
         dcc.Graph(id="graph-content", figure=fig),
-        html.I("Reference point"),
-        html.Br(),
-        dcc.Input(
-            id="reference_point_x",
-            type="text",
-            placeholder="x",
-            style={"marginRight": "10px"},
-        ),
-        dcc.Input(
-            id="reference_point_y",
-            type="text",
-            placeholder="y",
-            style={"marginRight": "10px"},
-        ),
-        dcc.Input(
-            id="reference_point_z",
-            type="text",
-            placeholder="z",
-            style={"marginRight": "10px"},
-        ),
-        dcc.RadioItems(
-            id="location",
-            options=[
-                "some point",
-                "vertex",
-                "nasion",
-                "inion",
-                "left tragus",
-                "right tragus",
-                "Circumference front",
-                "Circumference back",
-                "Circumference left",
-                "Circumference right",
+        html.Div(
+            children=[
+                html.Div(
+                    children=[
+                        html.H3("reference point"),
+                        dcc.Input(
+                            id="reference_point_x",
+                            type="text",
+                            placeholder="x",
+                            style={"marginRight": "10px"},
+                        ),
+                        html.Br(),
+                        dcc.Input(
+                            id="reference_point_y",
+                            type="text",
+                            placeholder="y",
+                            style={"marginRight": "10px"},
+                        ),
+                        html.Br(),
+                        dcc.Input(
+                            id="reference_point_z",
+                            type="text",
+                            placeholder="z",
+                            style={"marginRight": "10px"},
+                        ),
+                    ],
+                    style={"padding": 10, "background-color": "gray"},
+                ),
+                html.Div(
+                    children=[
+                        html.H3("(re)locate point"),
+                        dcc.RadioItems(
+                            id="location",
+                            options=[
+                                "some point",
+                                "vertex",
+                                "nasion",
+                                "inion",
+                                "left tragus",
+                                "right tragus",
+                                "circumference front",
+                            ],
+                            value="some point",
+                        ),
+                    ],
+                    style={"padding": 10, "background-color": "lightblue"},
+                ),
+                html.Div(
+                    children=[
+                        html.H3("show path"),
+                        dcc.Checklist(
+                            id="show_path",
+                            options=[
+                                "foo",
+                                "bar1",
+                                "bar2",
+                                "bar3",
+                                "bar4",
+                                "bar5",
+                            ],
+                        ),
+                    ],
+                    style={"padding": 10, "background-color": "lightcoral"},
+                ),
             ],
-            value="some point",
+            style={"display": "flex"},
         ),
         dcc.Store(id="state"),
     ]
@@ -123,6 +154,7 @@ def reference_point_moved(reference_point, state) -> bool:
     Input("reference_point_y", "value"),
     Input("reference_point_z", "value"),
     Input("location", "value"),
+    Input("show_path", "value"),
     State("graph-content", "figure"),
     State("graph-content", "relayoutData"),  # Capture current view settings
     State("state", "data"),
@@ -133,6 +165,7 @@ def update_graph(
     reference_point_y,
     reference_point_z,
     location,
+    show_path,
     figure,
     relayoutData,
     state,
