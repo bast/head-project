@@ -30,7 +30,6 @@ def parse_args():
 def get_list_of_files(directory: str) -> list:
     surface_files = [f for f in os.listdir(directory) if f.endswith(".txt")]
     surface_files.remove("outside-only.txt")
-    surface_files = ["1010.txt"]  # for testing
     return sorted(surface_files)
 
 
