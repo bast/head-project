@@ -1,0 +1,42 @@
+Bootstrap: docker
+From: ubuntu:23.04
+
+
+%files
+    requirements.txt /software/
+    *.py /software/
+
+
+%post
+    # basic settions
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -y
+
+    apt install -y python3 python3-venv
+
+    python3 -m venv /software/venv
+    . /software/venv/bin/activate
+    python3 -m pip install --upgrade pip
+
+    python3 -m pip install -r /software/requirements.txt
+
+    # default sh on ubuntu is dash
+    ln -sf /bin/bash /bin/sh
+
+
+%runscript
+    if [ $# -ne 1 ]; then
+        echo "This script expects one argument. Usage: $0 INPUT_PATH"
+        exit 1
+    fi
+
+    input_path=$1
+
+    source /software/venv/bin/activate
+
+    python3 /software/app.py --input-directory=${input_path}
+
+
+%help
+    example:
+    $ ./tms-location.sif /some/path/ernie_data
