@@ -1,3 +1,5 @@
+[![image](https://img.shields.io/badge/license-%20AGPL--v3.0-blue.svg)](LICENSE)
+
 # TMS location
 
 Code to visualize and locate points for transcranial magnetic stimulation
