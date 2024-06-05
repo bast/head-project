@@ -26,8 +26,7 @@ Then point the container image to the directory where you have the mesh data:
 $ ./tms-location.sif /path/to/ernie_data
 ```
 
-This reads mesh data from `/path/to/ernie_data` and opens up the browser with
-the web user interface.
+Then open the browser at the URL shown in the terminal (typically <http://127.0.0.1:8050>).
 
 
 ## The code uses the [potpourri3d library](https://github.com/nmwsharp/potpourri3d) to compute geodesic paths
