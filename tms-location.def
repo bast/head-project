@@ -20,6 +20,9 @@ From: ubuntu:23.04
 
     python3 -m pip install -r /software/requirements.txt
 
+    # make /software readable by all
+    chmod -R a+r /software
+
     # default sh on ubuntu is dash
     ln -sf /bin/bash /bin/sh
 
