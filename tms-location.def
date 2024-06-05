@@ -3,7 +3,7 @@ From: ubuntu:23.04
 
 
 %files
-    requirements.txt /software/
+    src/requirements.txt /software/
     src/*.py /software/
 
 
