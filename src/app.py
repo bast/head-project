@@ -376,7 +376,7 @@ def update_graph(
         figure["layout"]["scene"]["camera"] = relayoutData["scene.camera"]
 
     X = f"X = {state['distances'].get('vertex - surface point', 0):.1f} mm"
-    Y = f"X = {state['distances'].get('cf front - aim point', 0):.1f} mm"
+    Y = f"Y = {state['distances'].get('cf front - aim point', 0):.1f} mm"
     return figure, state, X, Y
 
 
