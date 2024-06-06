@@ -21,7 +21,8 @@ Code to visualize and locate points for trans-cranial magnetic stimulation
 First download the container image (ending with *.sif) from here:
 https://github.com/bast/tms-location/releases
 
-Then point the container image to the directory where you have the mesh data:
+Make the image executable and then point the container image to the directory
+where you have the mesh data:
 ```bash
 $ ./tms-location.sif /path/to/ernie_data
 ```
