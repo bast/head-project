@@ -7,10 +7,10 @@ import plotly.graph_objects as go
 
 from figure_elements import create_mesh, draw_point, draw_line
 from geodesic import create_solver, find_path
-from guess_locations import approximate_locations
 from distance import nearest_vertex_noddy
 from file_io import read_mesh
 from reference_point import reference_point_moved
+import csv
 
 
 def parse_args():
@@ -25,6 +25,27 @@ def parse_args():
     )
 
     return parser.parse_args()
+
+
+def eeg_locations(directory, points):
+
+    vertices = {}
+
+    # read positions from csv file
+    with open(os.path.join(directory, "eeg-positions.csv"), "r") as f:
+        for row in csv.DictReader(f):
+            position = row["position"]
+            x = float(row["x"])
+            y = float(row["y"])
+            z = float(row["z"])
+            vertex = nearest_vertex_noddy((x, y, z), points)
+            vertices[position] = vertex
+
+    vertices["cf left"] = vertices["left tragus"]
+    vertices["cf right"] = vertices["right tragus"]
+    vertices["cf front"] = vertices["nasion"]
+
+    return vertices
 
 
 def get_list_of_files(directory: str) -> list:
@@ -110,7 +131,7 @@ fig.update_layout(
 )
 
 
-locations = approximate_locations(mesh["outside-only"])
+locations = eeg_locations(args.input_directory, points)
 
 for location, index in locations.items():
     fig.add_trace(
