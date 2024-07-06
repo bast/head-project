@@ -145,6 +145,8 @@ for location, index in locations.items():
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
+app.title = "TMS location"
+
 app.layout = html.Div(
     [
         html.Div(
