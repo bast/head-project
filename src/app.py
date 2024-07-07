@@ -3,6 +3,7 @@ import dash_bootstrap_components as dbc
 import argparse
 import os
 import plotly.graph_objects as go
+import csv
 
 
 from figure_elements import create_mesh, draw_point, draw_line
@@ -10,7 +11,7 @@ from geodesic import create_solver, find_path
 from distance import nearest_vertex_noddy
 from file_io import read_mesh
 from reference_point import reference_point_moved
-import csv
+from mni import convert_mni_to_subject
 
 
 def parse_args():
@@ -157,7 +158,7 @@ app.layout = html.Div(
                         html.Br(),
                         html.Div(
                             children=[
-                                dbc.Label("reference point"),
+                                dbc.Label("reference point (MNI coordinates)"),
                                 dbc.Input(
                                     id="reference_point_x",
                                     type="text",
@@ -285,11 +286,14 @@ def update_graph(
     if reference_point_moved(
         (reference_point_x, reference_point_y, reference_point_z), state
     ):
-        reference_point = (
-            float(reference_point_x),
-            float(reference_point_y),
-            float(reference_point_z),
+        x_subject, y_subject, z_subject = convert_mni_to_subject(
+            reference_point_x,
+            reference_point_y,
+            reference_point_z,
+            os.path.join(args.input_directory, "m2m_data"),
         )
+
+        reference_point = (x_subject, y_subject, z_subject)
 
         state["reference_point"] = reference_point
 
