@@ -32,3 +32,13 @@ def _path_distance(points) -> float:
     for p1, p2 in zip(points[:-1], points[1:]):
         dist += _distance(p1, p2)
     return dist
+
+
+def find_x_index(solver, circumference_indices, surface_point_index):
+    min_distance = float("inf")
+    for i in circumference_indices:
+        distance, _ = find_path(solver, surface_point_index, i)
+        if distance < min_distance:
+            min_distance = distance
+            x_index = i
+    return x_index

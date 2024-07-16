@@ -1,13 +1,12 @@
-from dash import Dash, html, dcc, callback, Output, Input, State
+from dash import Dash, html, dcc, callback, Output, Input, State, ctx
 import dash_bootstrap_components as dbc
 import argparse
 import os
 import plotly.graph_objects as go
-import csv
 
 
 from figure_elements import create_mesh, draw_point, draw_line
-from geodesic import create_solver, find_path
+from geodesic import create_solver, find_path, find_x_index
 from distance import nearest_vertex_noddy
 from file_io import read_mesh
 from reference_point import reference_point_moved
@@ -24,34 +23,25 @@ def parse_args():
         "--debug",
         action="store_true",
     )
-
     return parser.parse_args()
 
 
-def eeg_locations(directory, points):
+def read_eeg_locations(directory, points):
+    eeg_locations = {}
+    with open(
+        os.path.join(directory, "eeg-positions", "EEG10-10_Cutini_2011.csv"), "r"
+    ) as f:
+        for line in f.read().splitlines():
+            for _, x, y, z, position in [line.split(",")]:
+                vertex = nearest_vertex_noddy((float(x), float(y), float(z)), points)
+                eeg_locations[position] = vertex
 
-    vertices = {}
-
-    # read positions from csv file
-    with open(os.path.join(directory, "eeg-positions.csv"), "r") as f:
-        for row in csv.DictReader(f):
-            position = row["position"]
-            x = float(row["x"])
-            y = float(row["y"])
-            z = float(row["z"])
-            vertex = nearest_vertex_noddy((x, y, z), points)
-            vertices[position] = vertex
-
-    vertices["cf left"] = vertices["left tragus"]
-    vertices["cf right"] = vertices["right tragus"]
-    vertices["cf front"] = vertices["nasion"]
-
-    return vertices
+    return eeg_locations
 
 
 def get_list_of_files(directory: str) -> list:
     surface_files = [f for f in os.listdir(directory) if f.endswith(".txt")]
-    surface_files.remove("outside-only.txt")
+    surface_files.remove("outside-surface.txt")
     return sorted(surface_files)
 
 
@@ -71,59 +61,33 @@ def detect_changes_in_list(list_selected, list_state):
     return to_remove, to_add
 
 
-def remove_from_figure(figure, to_remove):
-    if to_remove:
-        figure["data"] = [
-            trace for trace in figure["data"] if trace["name"] not in to_remove
-        ]
-
-
-def add_path_to_figure(figure, path, locations, distances, solver):
-    color = "black"
-    dash = "dash"
-    if path in ["cf front - aim point", "vertex - surface point"]:
-        color = "blue"
-        dash = "solid"
-
-    a, b = path.split(" - ")
-    v_start, v_end = locations[a], locations[b]
-    distance, shortest_path = find_path(solver, v_start, v_end)
-    figure["data"].append(
-        draw_line(
-            shortest_path,
-            color=color,
-            dash=dash,
-            name=path,
-        )
-    )
-    distances[path] = distance
-
-
 args = parse_args()
 
-surface_files = get_list_of_files(args.input_directory)
+surface_files = get_list_of_files(os.path.join(args.input_directory, "meshes"))
 
 
 mesh = {}
 
 for surface in surface_files:
-    points, vertices = read_mesh(os.path.join(args.input_directory, surface))
+    points, vertices = read_mesh(os.path.join(args.input_directory, "meshes", surface))
     mesh[surface] = create_mesh(
         points=points, vertices=vertices, name=surface, color="lightblue", opacity=0.2
     )
 
-points, vertices = read_mesh(os.path.join(args.input_directory, "outside-only.txt"))
-mesh["outside-only"] = create_mesh(
+points, vertices = read_mesh(
+    os.path.join(args.input_directory, "meshes", "outside-surface.txt")
+)
+mesh["outside-surface"] = create_mesh(
     points=points,
     vertices=vertices,
-    name="outside-only",
+    name="outside-surface",
     color="lightpink",
     opacity=0.5,
 )
 solver = create_solver(points, vertices)
 
 
-fig = go.Figure(data=[mesh["outside-only"]])
+fig = go.Figure(data=[mesh["outside-surface"]])
 
 fig.update_layout(
     autosize=False,
@@ -132,16 +96,47 @@ fig.update_layout(
 )
 
 
-locations = eeg_locations(args.input_directory, points)
+eeg_locations = read_eeg_locations(args.input_directory, points)
 
-for location, index in locations.items():
-    fig.add_trace(
+# EEG positions
+for location, index in eeg_locations.items():
+    fig.add_traces(
         draw_point(
             points[index],
             color="red",
-            name=location,
+            name=f"{location} (EEG)",
+            visible=True,
+            text=location,
         )
     )
+
+# guides
+circumference_points = []
+for a, b in [
+    ("Cz", "LPA"),
+    ("Cz", "RPA"),
+    ("Cz", "Nz"),
+    ("Cz", "Iz"),
+    ("T7", "Fpz"),
+    ("T8", "Fpz"),
+]:
+    _distance, shortest_path = find_path(solver, eeg_locations[a], eeg_locations[b])
+    fig.add_traces(
+        draw_line(
+            shortest_path,
+            color="black",
+            dash="dash",
+            name=f"guide {a} - {b}",
+            visible=True,
+        )
+    )
+    if (a, b) in [("T7", "Fpz"), ("T8", "Fpz")]:
+        circumference_points.extend(shortest_path)
+
+
+circumference_indices = list(
+    map(lambda x: nearest_vertex_noddy(x, points), circumference_points)
+)
 
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -179,49 +174,34 @@ app.layout = html.Div(
                                 ),
                             ],
                         ),
+                        # html.Br(),
+                        # html.Div(
+                        #     children=[
+                        #         html.Button(
+                        #             "Set position 1", id="button_1", n_clicks=0
+                        #         ),
+                        #         html.Button(
+                        #             "Set position 2", id="button_2", n_clicks=0
+                        #         ),
+                        #     ],
+                        # ),
                         html.Br(),
                         html.Div(
                             children=[
-                                dbc.Label("result"),
-                                dbc.Alert(
-                                    "placeholder",
-                                    color="primary",
-                                    id="computed-x-coordinate",
-                                ),
-                                dbc.Alert(
-                                    "placeholder",
-                                    color="primary",
-                                    id="computed-y-coordinate",
-                                ),
-                            ],
-                        ),
-                        html.Br(),
-                        html.Div(
-                            children=[
-                                dbc.Label("(re)locate point"),
-                                dbc.RadioItems(
-                                    id="location",
-                                    options=["aim point"] + list(locations.keys()),
-                                    value="aim point",
-                                ),
-                            ],
-                        ),
-                        html.Br(),
-                        html.Div(
-                            children=[
-                                dbc.Label("show path"),
+                                dbc.Label("options"),
                                 dbc.Checklist(
-                                    id="selected_paths",
+                                    id="show_eeg",
                                     options=[
-                                        "left tragus - vertex",
-                                        "right tragus - vertex",
-                                        "nasion - vertex",
-                                        "inion - vertex",
-                                        "cf left - cf front",
-                                        "cf right - cf front",
-                                        "cf front - aim point",
-                                        "vertex - aim point",
+                                        "Show EEG positions",
                                     ],
+                                    value=["Show EEG positions"],
+                                ),
+                                dbc.Checklist(
+                                    id="show_guides",
+                                    options=[
+                                        "Show guides",
+                                    ],
+                                    value=["Show guides"],
                                 ),
                             ],
                         ),
@@ -249,39 +229,60 @@ app.layout = html.Div(
 @callback(
     Output("graph-content", "figure"),
     Output("state", "data"),
-    Output("computed-x-coordinate", "children"),
-    Output("computed-y-coordinate", "children"),
-    Input("graph-content", "clickData"),
+    #   Input("button_1", "n_clicks"),
+    #   Input("button_2", "n_clicks"),
     Input("reference_point_x", "value"),
     Input("reference_point_y", "value"),
     Input("reference_point_z", "value"),
-    Input("location", "value"),
-    Input("selected_paths", "value"),
+    Input("show_eeg", "value"),
+    Input("show_guides", "value"),
     Input("selected_surfaces", "value"),
     State("graph-content", "figure"),
     State("graph-content", "relayoutData"),  # capture current view settings
     State("state", "data"),
 )
 def update_graph(
-    clickData,
+    # button_1,
+    # button_2,
     reference_point_x,
     reference_point_y,
     reference_point_z,
-    location,
-    selected_paths,
+    show_eeg,
+    show_guides,
     selected_surfaces,
     figure,
     relayoutData,
     state,
 ):
+    # comment about the selected_surfaces solution:
+    # Alternatively this could have been done using "visible"
+    # which would have simplified the code. Unfortunately, it
+    # made the app a lot slower since then all meshes are loaded
+    # in memory.
     state = state or {
         "reference_point": None,
         "selected_surfaces": None,
-        "selected_paths": None,
-        "clicked_index": None,
-        "locations": locations,
-        "distances": {},
     }
+
+    # toggles whether we see EEG positions
+    for trace in figure["data"]:
+        if "EEG" in trace["name"]:
+            trace["visible"] = show_eeg == ["Show EEG positions"]
+
+    # toggles whether we see guides
+    for trace in figure["data"]:
+        if "guide" in trace["name"]:
+            trace["visible"] = show_guides == ["Show guides"]
+
+    #   # debugging
+    #   if "button_1" == ctx.triggered_id:
+    #       reference_point_x = -38.0
+    #       reference_point_y = 44.0
+    #       reference_point_z = 26.0
+    #   if "button_2" == ctx.triggered_id:
+    #       reference_point_x = 38.0
+    #       reference_point_y = 44.0
+    #       reference_point_z = 26.0
 
     if reference_point_moved(
         (reference_point_x, reference_point_y, reference_point_z), state
@@ -304,107 +305,78 @@ def update_graph(
         surface_point = points[surface_point_index]
 
         figure["data"] = [
-            trace
-            for trace in figure["data"]
-            if not ("reference" in trace["name"] or "surface" in trace["name"])
+            trace for trace in figure["data"] if not ("reference" in trace["name"])
         ]
 
-        figure["data"].append(
+        figure["data"].extend(
             draw_point(
                 reference_point,
-                color="gray",
+                color="#202020",
                 name="reference point",
+                visible=True,
+                text="reference point",
             )
         )
-        figure["data"].append(
+        figure["data"].extend(
             draw_line(
                 [reference_point, surface_point],
-                color="gray",
+                color="#202020",
                 dash="dash",
                 name="line to reference surface point",
+                visible=True,
             )
         )
-        figure["data"].append(
+        figure["data"].extend(
             draw_point(
                 surface_point,
                 color="green",
                 name="reference surface point",
+                visible=True,
+                text="surface point",
             )
         )
 
-        state["locations"]["surface point"] = surface_point_index
-        add_path_to_figure(
-            figure,
-            "vertex - surface point",
-            state["locations"],
-            state["distances"],
-            solver,
+        distance_y, path_y = find_path(solver, eeg_locations["Cz"], surface_point_index)
+        figure["data"].extend(
+            draw_line(
+                path_y,
+                color="blue",
+                dash="solid",
+                name=f"reference Y distance",
+                visible=True,
+                text=f"Y = {distance_y:.1f} mm",
+            )
+        )
+
+        index_x = find_x_index(solver, circumference_indices, surface_point_index)
+        distance_x, path_x = find_path(solver, eeg_locations["Fpz"], index_x)
+        figure["data"].extend(
+            draw_line(
+                path_x,
+                color="blue",
+                dash="solid",
+                name=f"reference X distance",
+                visible=True,
+                text=f"X = {distance_x:.1f} mm",
+            )
         )
 
     # update surfaces
     surfaces_to_remove, surfaces_to_add = detect_changes_in_list(
         selected_surfaces, state["selected_surfaces"]
     )
-    remove_from_figure(figure, surfaces_to_remove)
+    figure["data"] = [
+        trace for trace in figure["data"] if trace["name"] not in surfaces_to_remove
+    ]
     for surface in surfaces_to_add:
         figure["data"].append(mesh[surface])
     state["selected_surfaces"] = selected_surfaces
-
-    # update paths
-    paths_to_remove, paths_to_add = detect_changes_in_list(
-        selected_paths, state["selected_paths"]
-    )
-    remove_from_figure(figure, paths_to_remove)
-    for path in paths_to_add:
-        add_path_to_figure(figure, path, state["locations"], state["distances"], solver)
-    state["selected_paths"] = selected_paths
-
-    # update points
-    if clickData is not None:
-        clicked_point = clickData["points"][0]
-        clicked_index = clicked_point["pointNumber"]
-        if clicked_index != state["clicked_index"]:
-            state["locations"][location] = clicked_index
-
-            remove_from_figure(figure, [location])
-
-            # draw new clicked point
-            figure["data"].append(
-                draw_point(
-                    (clicked_point["x"], clicked_point["y"], clicked_point["z"]),
-                    color="blue",
-                    name=location,
-                )
-            )
-
-            # was the clicked point part of a selected path?
-            if state["selected_paths"]:
-                for path in state["selected_paths"]:
-                    a, b = path.split(" - ")
-                    if a == location or b == location:
-                        remove_from_figure(figure, [path])
-                        add_path_to_figure(
-                            figure, path, state["locations"], state["distances"], solver
-                        )
-
-            # if surface point is defined and vertex moved, recalculate path vertex - surface point
-            if "surface point" in state["locations"]:
-                if location == "vertex":
-                    path = "vertex - surface point"
-                    remove_from_figure(figure, [path])
-                    add_path_to_figure(
-                        figure, path, state["locations"], state["distances"], solver
-                    )
-
-        state["clicked_index"] = clicked_index
 
     # apply the captured view settings to maintain orientation
     if relayoutData and "scene.camera" in relayoutData:
         figure["layout"]["scene"]["camera"] = relayoutData["scene.camera"]
 
-    X = f"X = {state['distances'].get('vertex - surface point', 0):.1f} mm"
-    Y = f"Y = {state['distances'].get('cf front - aim point', 0):.1f} mm"
-    return figure, state, X, Y
+    return figure, state
 
 
 if __name__ == "__main__":

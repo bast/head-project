@@ -9,6 +9,6 @@ else:
 
 def convert_mni_to_subject(x, y, z, m2m_path):
     if "TMS_DEBUG" in os.environ:
-        return 0.0, 0.0, 0.0
+        return float(x), float(y), float(z)
     else:
         return mni2subject_coords([x, y, z], m2m_path)
