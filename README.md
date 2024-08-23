@@ -30,6 +30,13 @@ $ ./tms-location.sif /path/to/ernie_data
 Then open the browser at the URL shown in the terminal (typically <http://127.0.0.1:8050>).
 
 
+## Authors
+
+- Radovan Bast
+- Per M. Aslaksen
+- Bente S. Barge
+
+
 ## The code uses the [potpourri3d library](https://github.com/nmwsharp/potpourri3d) to compute geodesic paths
 
 - https://github.com/nmwsharp/potpourri3d
