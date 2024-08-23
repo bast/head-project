@@ -149,7 +149,17 @@ app.layout = html.Div(
     [
         html.Div(
             children=[
-                dcc.Graph(id="graph-content", figure=fig),
+                html.Div(
+                    children=[
+                        html.P(
+                            f"data: {args.input_directory}",
+                            style={"textAlign": "center", "marginTop": 20},
+                        ),
+                        dcc.Graph(
+                            id="graph-content", figure=fig, style={"marginTop": 0}
+                        ),
+                    ],
+                ),
                 html.Div(
                     children=[
                         html.Br(),
