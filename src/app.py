@@ -183,6 +183,7 @@ app.layout = html.Div(
                                     debounce=True,
                                     style={"marginRight": "10px"},
                                 ),
+                                html.Div(id="error-message", style={"color": "red"}),
                             ],
                         ),
                         # html.Br(),
@@ -240,6 +241,7 @@ app.layout = html.Div(
 @callback(
     Output("graph-content", "figure"),
     Output("state", "data"),
+    Output("error-message", "children"),
     #   Input("button_1", "n_clicks"),
     #   Input("button_2", "n_clicks"),
     Input("reference_point_x", "value"),
@@ -319,6 +321,11 @@ def update_graph(
             trace for trace in figure["data"] if not ("reference" in trace["name"])
         ]
 
+        # we don't really know what to do with points behind year so we return error
+        ear_y = min(points[eeg_locations["T7"]][2], points[eeg_locations["T8"]][2])
+        if y_subject < ear_y:
+            return figure, state, "ERROR: reference point too far back"
+
         figure["data"].extend(
             draw_point(
                 reference_point,
@@ -392,7 +399,7 @@ def update_graph(
     if relayoutData and "scene.camera" in relayoutData:
         figure["layout"]["scene"]["camera"] = relayoutData["scene.camera"]
 
-    return figure, state
+    return figure, state, ""
 
 
 if __name__ == "__main__":
