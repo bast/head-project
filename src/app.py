@@ -94,6 +94,7 @@ fig.update_layout(
     width=1200,
     height=1200,
     scene_camera=dict(eye=dict(x=-1.25, y=1.25, z=1.25)),
+    margin=dict(l=0, r=0, t=0, b=0),
 )
 
 
