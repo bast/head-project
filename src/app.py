@@ -359,7 +359,12 @@ def update_graph(
             )
         )
 
-        index_x = find_x_index(solver, circumference_indices, surface_point_index)
+        index_x = find_x_index(
+            solver,
+            circumference_indices,
+            eeg_locations["Cz"],
+            surface_point,
+        )
         distance_x, path_x = find_path(solver, eeg_locations["Fpz"], index_x)
         figure["data"].extend(
             draw_line(
