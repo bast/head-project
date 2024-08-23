@@ -13,7 +13,16 @@ def find_path(solver, v_start, v_end):
     for p in solver.find_geodesic_path(v_start, v_end):
         x, y, z = tuple(p.tolist())
         points.append((x, y, z))
-    return _path_distance(points), points
+    return _path_length(points), points
+
+
+def _distance_point_path(point, path) -> float:
+    min_distance = float("inf")
+    for p in path:
+        distance = _distance_squared(point, p)
+        if distance < min_distance:
+            min_distance = distance
+    return min_distance**0.5
 
 
 def _distance_squared(p1, p2) -> float:
@@ -27,17 +36,22 @@ def _distance(p1, p2) -> float:
     return _distance_squared(p1, p2) ** 0.5
 
 
-def _path_distance(points) -> float:
-    dist = 0.0
+def _path_length(points) -> float:
+    result = 0.0
     for p1, p2 in zip(points[:-1], points[1:]):
-        dist += _distance(p1, p2)
-    return dist
+        result += _distance(p1, p2)
+    return result
 
 
-def find_x_index(solver, circumference_indices, surface_point_index):
+# for each point along the circumference, we compute the shortest path to Cz
+# then for each of these paths we compute the distance to the surface point
+# the path with the shortest distance is the one that defines the point along
+# the circumference
+def find_x_index(solver, circumference_indices, cz_index, surface_point):
     min_distance = float("inf")
     for i in circumference_indices:
-        distance, _ = find_path(solver, surface_point_index, i)
+        _, path = find_path(solver, i, cz_index)
+        distance = _distance_point_path(surface_point, path)
         if distance < min_distance:
             min_distance = distance
             x_index = i
