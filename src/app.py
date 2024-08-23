@@ -39,12 +39,6 @@ def read_eeg_locations(directory, points):
     return eeg_locations
 
 
-def get_list_of_files(directory: str) -> list:
-    surface_files = [f for f in os.listdir(directory) if f.endswith(".txt")]
-    surface_files.remove("outside-surface.txt")
-    return sorted(surface_files)
-
-
 def detect_changes_in_list(list_selected, list_state):
     to_remove = []
     to_add = []
@@ -63,16 +57,18 @@ def detect_changes_in_list(list_selected, list_state):
 
 args = parse_args()
 
-surface_files = get_list_of_files(os.path.join(args.input_directory, "meshes"))
-
 
 mesh = {}
 
-for surface in surface_files:
-    points, vertices = read_mesh(os.path.join(args.input_directory, "meshes", surface))
-    mesh[surface] = create_mesh(
-        points=points, vertices=vertices, name=surface, color="lightblue", opacity=0.2
+surface_files = []
+for tag, file_name in [("WM", "1001.txt"), ("GM", "1002.txt"), ("CSF", "1003.txt")]:
+    points, vertices = read_mesh(
+        os.path.join(args.input_directory, "meshes", file_name)
     )
+    mesh[tag] = create_mesh(
+        points=points, vertices=vertices, name=tag, color="lightblue", opacity=0.2
+    )
+    surface_files.append(tag)
 
 points, vertices = read_mesh(
     os.path.join(args.input_directory, "meshes", "outside-surface.txt")
