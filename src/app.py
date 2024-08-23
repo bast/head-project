@@ -39,12 +39,6 @@ def read_eeg_locations(directory, points):
     return eeg_locations
 
 
-def get_list_of_files(directory: str) -> list:
-    surface_files = [f for f in os.listdir(directory) if f.endswith(".txt")]
-    surface_files.remove("outside-surface.txt")
-    return sorted(surface_files)
-
-
 def detect_changes_in_list(list_selected, list_state):
     to_remove = []
     to_add = []
@@ -63,16 +57,18 @@ def detect_changes_in_list(list_selected, list_state):
 
 args = parse_args()
 
-surface_files = get_list_of_files(os.path.join(args.input_directory, "meshes"))
-
 
 mesh = {}
 
-for surface in surface_files:
-    points, vertices = read_mesh(os.path.join(args.input_directory, "meshes", surface))
-    mesh[surface] = create_mesh(
-        points=points, vertices=vertices, name=surface, color="lightblue", opacity=0.2
+surface_files = []
+for tag, file_name in [("WM", "1001.txt"), ("GM", "1002.txt"), ("CSF", "1003.txt")]:
+    points, vertices = read_mesh(
+        os.path.join(args.input_directory, "meshes", file_name)
     )
+    mesh[tag] = create_mesh(
+        points=points, vertices=vertices, name=tag, color="lightblue", opacity=0.2
+    )
+    surface_files.append(tag)
 
 points, vertices = read_mesh(
     os.path.join(args.input_directory, "meshes", "outside-surface.txt")
@@ -93,6 +89,8 @@ fig.update_layout(
     autosize=False,
     width=1200,
     height=1200,
+    scene_camera=dict(eye=dict(x=-1.25, y=1.25, z=1.25)),
+    margin=dict(l=0, r=0, t=0, b=0),
 )
 
 
@@ -147,7 +145,17 @@ app.layout = html.Div(
     [
         html.Div(
             children=[
-                dcc.Graph(id="graph-content", figure=fig),
+                html.Div(
+                    children=[
+                        html.P(
+                            f"data: {args.input_directory}",
+                            style={"textAlign": "center", "marginTop": 20},
+                        ),
+                        dcc.Graph(
+                            id="graph-content", figure=fig, style={"marginTop": 0}
+                        ),
+                    ],
+                ),
                 html.Div(
                     children=[
                         html.Br(),
