@@ -93,6 +93,7 @@ fig.update_layout(
     autosize=False,
     width=1200,
     height=1200,
+    scene_camera=dict(eye=dict(x=-1.25, y=1.25, z=1.25)),
 )
 
 
