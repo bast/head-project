@@ -1,4 +1,4 @@
-from dash import Dash, html, dcc, callback, Output, Input, State, ctx
+from dash import Dash, html, dcc, callback, Output, Input, State
 import dash_bootstrap_components as dbc
 import argparse
 import os
@@ -126,6 +126,8 @@ for a, b in [
             dash="dash",
             name=f"guide {a} - {b}",
             visible=True,
+            text=f"{a} - {b}: {_distance:.1f} mm",
+            text_size=14,
         )
     )
     if (a, b) in [("T7", "Fpz"), ("T8", "Fpz")]:
