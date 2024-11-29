@@ -44,7 +44,7 @@ def draw_point(point, color, name, visible, text=None):
     return result
 
 
-def draw_line(points, color, dash, name, visible, text=None):
+def draw_line(points, color, dash, name, visible, text=None, text_size=20):
     x, y, z = zip(*points)
 
     visible = True if visible else "legendonly"
@@ -80,7 +80,7 @@ def draw_line(points, color, dash, name, visible, text=None):
                 text=[text],
                 textfont=dict(
                     color=color,
-                    size=20,
+                    size=text_size,
                 ),
                 textposition="top right",
                 showlegend=False,

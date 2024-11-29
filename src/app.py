@@ -1,4 +1,4 @@
-from dash import Dash, html, dcc, callback, Output, Input, State, ctx
+from dash import Dash, html, dcc, callback, Output, Input, State
 import dash_bootstrap_components as dbc
 import argparse
 import os
@@ -126,6 +126,8 @@ for a, b in [
             dash="dash",
             name=f"guide {a} - {b}",
             visible=True,
+            text=f"{a} - {b}: {_distance:.1f} mm",
+            text_size=14,
         )
     )
     if (a, b) in [("T7", "Fpz"), ("T8", "Fpz")]:
@@ -318,7 +320,7 @@ def update_graph(
         surface_point = points[surface_point_index]
 
         figure["data"] = [
-            trace for trace in figure["data"] if not ("reference" in trace["name"])
+            trace for trace in figure["data"] if "reference" not in trace["name"]
         ]
 
         # we don't really know what to do with points behind year so we return error
@@ -360,7 +362,7 @@ def update_graph(
                 path_y,
                 color="blue",
                 dash="solid",
-                name=f"reference Y distance",
+                name="reference Y distance",
                 visible=True,
                 text=f"Y = {distance_y:.1f} mm",
             )
@@ -378,7 +380,7 @@ def update_graph(
                 path_x,
                 color="blue",
                 dash="solid",
-                name=f"reference X distance",
+                name="reference X distance",
                 visible=True,
                 text=f"X = {distance_x:.1f} mm",
             )

@@ -5,6 +5,8 @@
 Code to visualize and locate points for trans-cranial magnetic stimulation
 (TMS).
 
+![screenshot of the web app](img/tms-screenshot.png)
+
 
 ## Requirements
 
