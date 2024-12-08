@@ -365,6 +365,7 @@ def update_graph(
                 name="reference Y distance",
                 visible=True,
                 text=f"Y = {distance_y:.1f} mm",
+                text_size=20,
             )
         )
 
@@ -383,6 +384,7 @@ def update_graph(
                 name="reference X distance",
                 visible=True,
                 text=f"X = {distance_x:.1f} mm",
+                text_size=20,
             )
         )
 
