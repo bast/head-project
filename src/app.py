@@ -108,6 +108,9 @@ for location, index in eeg_locations.items():
         )
     )
 
+distance_nz_iz = 0.0
+distance_lpa_rpa = 0.0
+
 # guides
 circumference_points = []
 for a, b in [
@@ -118,7 +121,7 @@ for a, b in [
     ("T7", "Fpz"),
     ("T8", "Fpz"),
 ]:
-    _distance, shortest_path = find_path(solver, eeg_locations[a], eeg_locations[b])
+    distance, shortest_path = find_path(solver, eeg_locations[a], eeg_locations[b])
     fig.add_traces(
         draw_line(
             shortest_path,
@@ -126,12 +129,14 @@ for a, b in [
             dash="dash",
             name=f"guide {a} - {b}",
             visible=True,
-            text=f"{a} - {b}: {_distance:.1f} mm",
-            text_size=14,
         )
     )
     if (a, b) in [("T7", "Fpz"), ("T8", "Fpz")]:
         circumference_points.extend(shortest_path)
+    if (a, b) in [("Cz", "Nz"), ("Cz", "Iz")]:
+        distance_nz_iz += distance
+    if (a, b) in [("Cz", "LPA"), ("Cz", "RPA")]:
+        distance_lpa_rpa += distance
 
 
 circumference_indices = list(
@@ -163,7 +168,10 @@ app.layout = html.Div(
                         html.Br(),
                         html.Div(
                             children=[
-                                dbc.Label("reference point (MNI coordinates)"),
+                                dbc.Label(
+                                    "reference point (MNI coordinates)",
+                                    style={"fontWeight": "bold"},
+                                ),
                                 dbc.Input(
                                     id="reference_point_x",
                                     type="text",
@@ -202,7 +210,7 @@ app.layout = html.Div(
                         html.Br(),
                         html.Div(
                             children=[
-                                dbc.Label("options"),
+                                dbc.Label("options", style={"fontWeight": "bold"}),
                                 dbc.Checklist(
                                     id="show_eeg",
                                     options=[
@@ -222,10 +230,22 @@ app.layout = html.Div(
                         html.Br(),
                         html.Div(
                             children=[
-                                dbc.Label("show surface"),
+                                dbc.Label("show surface", style={"fontWeight": "bold"}),
                                 dbc.Checklist(
                                     id="selected_surfaces",
                                     options=surface_files,
+                                ),
+                            ],
+                        ),
+                        html.Br(),
+                        html.Div(
+                            children=[
+                                dbc.Label("distances", style={"fontWeight": "bold"}),
+                                html.P(
+                                    f"Nz-Iz: {0.1*distance_nz_iz:.1f} cm",
+                                ),
+                                html.P(
+                                    f"LPA-RPA: {0.1*distance_lpa_rpa:.1f} cm",
                                 ),
                             ],
                         ),
